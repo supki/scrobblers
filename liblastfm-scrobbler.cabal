@@ -1,0 +1,29 @@
+name:                liblastfm-scrobbler
+version:             0.1.0.0
+synopsis:            Lastfm scrobbler
+description:
+  Lastfm scrobbler
+  .
+  Based on @liblastfm@ and @netwire@
+license:             BSD3
+license-file:        LICENSE
+author:              Matvey Aksenov
+maintainer:          matvey.aksenov@gmail.com
+category:            Web
+build-type:          Simple
+cabal-version:       >= 1.8
+
+executable liblastfm-scrobbler
+  default-language:  Haskell2010
+  hs-source-dirs:    src
+  main-is:           Main.hs
+  build-depends:
+    base >= 4 && < 5,
+    containers,
+    liblastfm >= 0.2,
+    libmpd,
+    mtl,
+    netwire,
+    text,
+    time,
+    old-locale
