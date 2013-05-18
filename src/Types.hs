@@ -10,12 +10,17 @@ import           Data.Default (Default(..))
 import           Data.Text (Text)
 import qualified Network.MPD as Y
 
+-- | Change in 'Player' behaviour
+--
+-- We need it because we want to capture pausing/stopping
+-- the player as well as chaning tracks
+type Change = Maybe Track
 
 -- | Track information
 data Track = Track
   { _timestamp :: Int64  -- ^ playing start timestamp
-  , _artist    :: Text   -- ^ artist
   , _title     :: Text   -- ^ title
+  , _artist    :: Text   -- ^ artist
   , _album     :: Text   -- ^ album title (optional)
   , _length    :: Int64  -- ^ duration
   } deriving (Show, Read, Eq, Ord)
@@ -45,6 +50,6 @@ data Player
 
 -- | Scrobbler errors
 data Error
-  = NoTrack
+  = NoCandidate
   | NoScrobble
     deriving (Show, Read, Eq, Ord, Enum, Bounded)

@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-module MPD (change) where
+module MPD (candidate) where
 
+import Data.Int (Int64)
 import Prelude hiding ((.), id, length)
 
 import           Control.Lens
@@ -14,25 +15,33 @@ import Types
 
 
 -- | Look for player state changes over time
-change :: Wire Error Y.MPD Time Track
-change = mkStateM NotPlaying $ \_dt (t, s) ->
+candidate :: Wire Error Y.MPD Int64 Change
+candidate = mkStateM NotPlaying $ \_dt (t, s) ->
   Y.stState `fmap` Y.status >>= \s' -> case (s, s') of
-    (NotPlaying, Y.Stopped) -> return (Left NoTrack, NotPlaying)
-    (NotPlaying, Y.Paused)  -> return (Left NoTrack, NotPlaying)
+    -- If we were not playing and are not playing now there is no candidate to send
+    (NotPlaying, Y.Stopped) -> return (Left NoCandidate, NotPlaying)
+    (NotPlaying, Y.Paused)  -> return (Left NoCandidate, NotPlaying)
+    -- If we started playing just now there is a candidate to send
     (NotPlaying, Y.Playing) -> do
       Just song <- Y.currentSong
-      return (Right (fetchTrackData song & timestamp .~ round t), Playing song (round t))
-    (Playing _ _,    Y.Stopped) -> return (Left NoTrack, NotPlaying)
-    (Playing _ _,    Y.Paused)  -> return (Left NoTrack, NotPlaying)
+      return (Right (Just (fetchTrackData song & timestamp .~ t)), Playing song t)
+    -- If we were playing and are not playing now we send that change
+    (Playing _ _,    Y.Stopped) -> return (Right Nothing, NotPlaying)
+    (Playing _ _,    Y.Paused)  -> return (Right Nothing, NotPlaying)
+    -- If we were playing and are playing everything become complicated
     (Playing song ts, Y.Playing) -> do
       Just song' <- Y.currentSong
+      -- If the songs are different, then new song is a candidate to send
       if song /= song' then
-        return (Right (fetchTrackData song' & timestamp .~ round t), Playing song' (round t))
+        return (Right (Just (fetchTrackData song' & timestamp .~ t)), Playing song' t)
       else
+        -- Otherwise, if song has been played more then its duration
+        -- it means that its looped, so we send it as candidate once again
         let ts' = ts + fromIntegral (Y.sgLength song)
-        in if ts + fromIntegral (Y.sgLength song) < round t
-          then return (Right (fetchTrackData song' & timestamp .~ ts'), Playing song' ts')
-          else return (Left NoTrack, s)
+        in if ts + fromIntegral (Y.sgLength song) < t
+          then return (Right (Just (fetchTrackData song' & timestamp .~ ts')), Playing song' ts')
+          -- Otherwise, there is no candidate to send
+          else return (Left NoCandidate, s)
 
 
 fetchTrackData :: Y.Song -> Track
