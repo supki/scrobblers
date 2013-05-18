@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 -- | Various types used in scrobbler
-module Types where
+module Scrobbler.Types where
 
 import Data.Int (Int64)
 

@@ -1,4 +1,4 @@
-module Algorithm (candidate, contest) where
+module Scrobbler.Algorithm (candidate, contest) where
 
 import Data.Int (Int64)
 import Prelude hiding ((.), id, length)
@@ -10,7 +10,7 @@ import           Data.Map (Map)
 import           Data.Text (Text)
 import qualified Network.MPD as Y
 
-import Types
+import Scrobbler.Types
 
 
 -- | Look for player state changes over time
