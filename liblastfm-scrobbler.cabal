@@ -23,6 +23,8 @@ executable liblastfm-scrobbler
     base >= 4 && < 5,
     containers,
     liblastfm >= 0.2,
+    data-default,
+    lens,
     libmpd,
     mtl,
     netwire,

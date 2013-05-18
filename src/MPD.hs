@@ -14,22 +14,21 @@ import Types
 
 
 -- | Look for player state changes over time
-change :: Wire Error Y.MPD Time Change
-change = mkStateM Stopped $ \_dt (t, s) ->
+change :: Wire Error Y.MPD Time Track
+change = mkStateM NotPlaying $ \_dt (t, s) ->
   Y.stState `fmap` Y.status >>= \s' -> case (s, s') of
-    (Paused,    Y.Stopped) -> return (Right Nothing, Stopped)
-    (Playing _, Y.Stopped) -> return (Right Nothing, Stopped)
-    (Stopped,   Y.Paused)  -> return (Right Nothing, Paused)
-    (Playing _, Y.Paused)  -> return (Right Nothing, Paused)
-    (Playing song, Y.Playing) -> do
+    (NotPlaying, Y.Stopped) -> return (Left NoTrack, NotPlaying)
+    (NotPlaying, Y.Paused)  -> return (Left NoTrack, NotPlaying)
+    (NotPlaying, Y.Playing) -> do
+      Just song <- Y.currentSong
+      return (Right (fetchTrackData song & timestamp .~ round t), Playing song (round t))
+    (Playing _ _,    Y.Stopped) -> return (Left NoTrack, NotPlaying)
+    (Playing _ _,    Y.Paused)  -> return (Left NoTrack, NotPlaying)
+    (Playing song _, Y.Playing) -> do
       Just song' <- Y.currentSong
       if song /= song' then do
-        return (Right (Just (fetchTrackData song' & timestamp .~ round t)), Playing song')
-      else return (Left NoChange, s)
-    (_, Y.Playing) -> do
-      Just song <- Y.currentSong
-      return (Right (Just (fetchTrackData song & timestamp .~ round t)), Playing song)
-    _ -> return (Left NoChange, s)
+        return (Right (fetchTrackData song' & timestamp .~ round t), Playing song' (round t))
+      else return (Left NoTrack, s)
 
 
 fetchTrackData :: Y.Song -> Track

@@ -11,9 +11,6 @@ import           Data.Text (Text)
 import qualified Network.MPD as Y
 
 
--- | Player state change
-type Change = Maybe Track
-
 -- | Track information
 data Track = Track
   { _timestamp :: Int64  -- ^ playing start timestamp
@@ -42,13 +39,12 @@ data Scrobble
 
 -- | Player state
 data Player
-  = Playing Y.Song -- ^ Candidate for scrobbling record
-  | Stopped        -- ^ Being stopped
-  | Paused         -- ^ Being paused
+  = Playing Y.Song Int64 -- ^ Candidate for scrobbling record
+  | NotPlaying           -- ^ Being stopped or paused
     deriving (Show, Eq)
 
 -- | Scrobbler errors
 data Error
-  = NoChange
+  = NoTrack
   | NoScrobble
     deriving (Show, Read, Eq, Ord, Enum, Bounded)
