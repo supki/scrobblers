@@ -10,7 +10,6 @@ import Data.Int (Int64)
 import Prelude hiding ((.), (**), id, length)
 
 import           Control.Monad.Trans (MonadIO, liftIO)
-import           Control.Lens
 import           Control.Wire
 import           Data.Time (formatTime, getCurrentTime)
 import qualified Network.Lastfm as L
@@ -18,7 +17,7 @@ import qualified Network.Lastfm.Track as T
 import qualified Network.MPD as Y
 import           System.Locale (defaultTimeLocale)
 
-import MPD
+import Algorithm
 import Types
 
 
@@ -61,24 +60,6 @@ announce = mkFixM $ \_dt ch -> case ch of
  where
   go Track { _artist = ar, _title = t, _album = al, _length = l } = io . L.lastfm . L.sign secret $
     T.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*> ak <*> sk <* L.json
-
-
--- | Check if candidate is ready to be scrobbled
---
--- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
-contest :: Wire Error m (Int64, Change) Track
-contest = mkState Nothing $ \_dt ((t, ch), tr) -> (maybe (Left NoScrobble) (scrobble t) tr, ch)
- where
-  scrobble t tr
-    -- If candidate length is less than 30 seconds, we do not scrobble it
-    | tr^.length < 30 = Left NoScrobble
-    -- Otherwise, if the time passed since is more than half candidate lenght it's
-    -- definitely should be scrobbled
-    | t - tr^.timestamp > tr^.length `div` 2 = Right tr
-    -- Otherwise, if the passed is more than 4 minutes it's should be scrobbled anyway
-    | t - tr^.timestamp > 4 * 60 = Right tr
-    -- Otherwise there is nothing to scrobble
-    | otherwise = Left NoScrobble
 
 
 io :: MonadIO m => IO a -> m a
