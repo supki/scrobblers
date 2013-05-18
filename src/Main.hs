@@ -7,9 +7,10 @@ module Main where
 import Control.Exception (catch)
 import Control.Monad (void)
 import Data.Int (Int64)
-import Prelude hiding ((.), (**), id)
+import Prelude hiding ((.), (**), id, length)
 
 import           Control.Monad.Trans (MonadIO, liftIO)
+import           Control.Lens
 import           Control.Wire
 import           Data.Time (formatTime, getCurrentTime)
 import qualified Network.Lastfm as L
@@ -69,11 +70,13 @@ contest :: Wire Error m (Int64, Change) Track
 contest = mkState Nothing $ \_dt ((t, ch), tr) -> (maybe (Left NoScrobble) (scrobble t) tr, ch)
  where
   scrobble t tr
-    -- If the time passed since is more than half candidate lenght it's
+    -- If candidate length is less than 30 seconds, we do not scrobble it
+    | tr^.length < 30 = Left NoScrobble
+    -- Otherwise, if the time passed since is more than half candidate lenght it's
     -- definitely should be scrobbled
-    | (t - _timestamp tr) > _length tr `div` 2 = Right tr
-    -- Otherwise if the passed is more than 4 minutes it's should be scrobbled anyway
-    | t - _timestamp tr > 4 * 60 = Right tr
+    | t - tr^.timestamp > tr^.length `div` 2 = Right tr
+    -- Otherwise, if the passed is more than 4 minutes it's should be scrobbled anyway
+    | t - tr^.timestamp > 4 * 60 = Right tr
     -- Otherwise there is nothing to scrobble
     | otherwise = Left NoScrobble
 
