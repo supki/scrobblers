@@ -34,7 +34,7 @@ secret = "__YOUR_SECRET__"
 -- | Application loop
 main :: IO ()
 main =
-  void (Y.withMPD (loop' (scrobble . time' ** announce . candidate . time') clockSession))
+  void (Y.withMPD (loop' (contest . time' ** announce . candidate . time') clockSession))
  `catch`
   \(_ :: SomeException) -> main
  where
@@ -65,20 +65,17 @@ announce = mkFixM $ \_dt ch -> case ch of
 -- | Check if candidate is ready to be scrobbled
 --
 -- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
-scrobble :: Wire Error m (Int64, Change) Track
-scrobble = mkState Nothing $ \_dt ((t, ch), s) ->
-  case s of
-    -- If we don't have candidate there is nothing to scrobble
-    Nothing  -> (Left NoScrobble, ch)
-    Just tr' ->
-      -- If the time passed since is more than half candidate lenght it's
-      -- definitely should be scrobbled
-      if (t - _timestamp tr') > _length tr' `div` 2
-        then (Right tr', ch)
-        -- Otherwise if the passed is more than 4 minutes it's should be scrobbled anyway
-        else if t - _timestamp tr' > 4 * 60
-          then (Right tr', ch)
-          else (Left NoScrobble, ch)
+contest :: Wire Error m (Int64, Change) Track
+contest = mkState Nothing $ \_dt ((t, ch), tr) -> (maybe (Left NoScrobble) (scrobble t) tr, ch)
+ where
+  scrobble t tr
+    -- If the time passed since is more than half candidate lenght it's
+    -- definitely should be scrobbled
+    | (t - _timestamp tr) > _length tr `div` 2 = Right tr
+    -- Otherwise if the passed is more than 4 minutes it's should be scrobbled anyway
+    | t - _timestamp tr > 4 * 60 = Right tr
+    -- Otherwise there is nothing to scrobble
+    | otherwise = Left NoScrobble
 
 
 io :: MonadIO m => IO a -> m a
