@@ -36,12 +36,6 @@ instance Default Track where
     , _length    = 0
     }
 
--- | Scrobble state
-data Scrobble
-  = Started Track -- ^ Candidate for scrobbling record
-  | Idle          -- ^ Doing nothing currently
-    deriving (Show, Read, Eq, Ord)
-
 -- | Player state
 data Player
   = Playing Y.Song Int64 -- ^ Candidate for scrobbling record

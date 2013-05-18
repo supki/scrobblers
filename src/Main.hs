@@ -62,20 +62,23 @@ announce = mkFixM $ \_dt ch -> case ch of
     T.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*> ak <*> sk <* L.json
 
 
--- | Since player state has changed, probably scrobble is needed
+-- | Check if candidate is ready to be scrobbled
+--
+-- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
 scrobble :: Wire Error m (Int64, Change) Track
-scrobble = mkState Idle $ \_dt ((t, ch), s) ->
-  case (s, ch) of
-    (Idle, Nothing) -> (Left NoScrobble, Idle)
-    (Idle, Just tr) -> (Left NoScrobble, Started tr)
-    (Started tr', Nothing) ->
-      if (t - _timestamp tr') * 2 > _length tr'
-        then (Right tr', Idle)
-        else (Left NoScrobble, Idle)
-    (Started tr', Just tr) ->
-      if (t - _timestamp tr') * 2 > _length tr'
-        then (Right tr', Started tr)
-        else (Left NoScrobble, Started tr)
+scrobble = mkState Nothing $ \_dt ((t, ch), s) ->
+  case s of
+    -- If we don't have candidate there is nothing to scrobble
+    Nothing  -> (Left NoScrobble, ch)
+    Just tr' ->
+      -- If the time passed since is more than half candidate lenght it's
+      -- definitely should be scrobbled
+      if (t - _timestamp tr') > _length tr' `div` 2
+        then (Right tr', ch)
+        -- Otherwise if the passed is more than 4 minutes it's should be scrobbled anyway
+        else if t - _timestamp tr' > 4 * 60
+          then (Right tr', ch)
+          else (Left NoScrobble, ch)
 
 
 io :: MonadIO m => IO a -> m a
@@ -85,6 +88,7 @@ io = liftIO
 infixr 9 **
 (**) :: Applicative m => m a -> m b -> m (a, b)
 (**) = liftA2 (,)
+
 
 time' :: Monad m => Wire e m () Int64
 time' = round <$> time
