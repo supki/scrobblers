@@ -61,7 +61,7 @@ announce = mkFixM $ \_dt ch -> case ch of
 
 
 -- | Since player state has changed, probably scrobble is needed
-scrobble :: MonadIO m => Wire Error m (Time, Track) Track
+scrobble :: Wire Error m (Time, Track) Track
 scrobble = mkState Idle $ \_dt ((t, tr), s) ->
   case s of
     Idle -> (Left NoScrobble, (Started tr))

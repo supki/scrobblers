@@ -24,11 +24,15 @@ change = mkStateM NotPlaying $ \_dt (t, s) ->
       return (Right (fetchTrackData song & timestamp .~ round t), Playing song (round t))
     (Playing _ _,    Y.Stopped) -> return (Left NoTrack, NotPlaying)
     (Playing _ _,    Y.Paused)  -> return (Left NoTrack, NotPlaying)
-    (Playing song _, Y.Playing) -> do
+    (Playing song ts, Y.Playing) -> do
       Just song' <- Y.currentSong
-      if song /= song' then do
+      if song /= song' then
         return (Right (fetchTrackData song' & timestamp .~ round t), Playing song' (round t))
-      else return (Left NoTrack, s)
+      else
+        let ts' = ts + fromIntegral (Y.sgLength song)
+        in if ts + fromIntegral (Y.sgLength song) < round t
+          then return (Right (fetchTrackData song' & timestamp .~ ts'), Playing song' ts')
+          else return (Left NoTrack, s)
 
 
 fetchTrackData :: Y.Song -> Track
