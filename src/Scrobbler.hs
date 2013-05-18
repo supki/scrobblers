@@ -1,13 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Scrobbler
   ( -- * Application entry point
-    scrobble
+    scrobbler
     -- * User credentials
   , Credentials(..)
   ) where
 
+import Control.Concurrent (threadDelay)
 import Control.Exception (catch)
-import Control.Monad (void)
+import Control.Monad (liftM, void)
 import Data.Int (Int64)
 import Prelude hiding ((.), (**), id, length)
 
@@ -31,28 +32,34 @@ data Credentials = Credentials
   }
 
 -- | Application loop
-scrobble :: Credentials -> IO ()
-scrobble cs =
-  void (Y.withMPD (loop' (contest . time' ** announce cs . candidate . time') clockSession))
+scrobbler :: Credentials -> IO ()
+scrobbler cs =
+  void (Y.withMPD (loop' (scrobble cs . contest . time' ** announce cs . candidate . time') clockSession))
  `catch`
-  \(_ :: SomeException) -> scrobble cs
+  \(_ :: SomeException) -> scrobbler cs
  where
-  loop' :: Wire Error Y.MPD () Track -> Session Y.MPD -> Y.MPD ()
+  loop' :: Wire Error Y.MPD () () -> Session Y.MPD -> Y.MPD ()
   loop' w' session' = do
     (mx, w, session) <- stepSession w' session' ()
     case mx of
-      Right x -> go cs x >> io (print x)
-      _       -> return ()
+      Right () -> io (putStrLn "Successfully scrobbled!")
+      _        -> return ()
+    io (threadDelay 1000000)
     loop' w session
 
-  go Credentials{secret = s, apiKey = ak, sessionKey = sk} Track{_artist = ar, _title = t, _album = al} = do
-    ts <- read . formatTime defaultTimeLocale "%s" <$> io getCurrentTime
-    io . L.lastfm . L.sign s $
+-- | Scrobble track
+scrobble :: MonadIO m => Credentials -> Wire Error m Track ()
+scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $
+  \_dt Track { _artist = ar, _title = t, _album = al } -> do
+    ts <- (read . formatTime defaultTimeLocale "%s") `liftM` io getCurrentTime
+    r <- io . L.lastfm . L.sign s $
       T.scrobble <*> L.artist ar <*> L.track t <*> L.timestamp ts <* L.album al <*>
       L.apiKey ak <*> L.sessionKey sk <* L.json
+    case r of
+      Just _  -> return (Right ())
+      Nothing -> return (Left FailedScrobble)
 
-
--- | Announce player state change to the whole world
+-- | Update user lastfm profile page
 announce :: MonadIO m => Credentials -> Wire e m Change Change
 announce Credentials{secret = s, apiKey = ak, sessionKey = sk} = mkFixM $ \_dt ch -> case ch of
   Just tr -> go tr >> io (print tr) >> return (Right ch)

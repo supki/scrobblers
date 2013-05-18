@@ -25,8 +25,8 @@ candidate = mkStateM NotPlaying $ \_dt (t, s) ->
       Just song <- Y.currentSong
       return (Right (Just (fetchTrackData song & timestamp .~ t)), Playing song t)
     -- If we were playing and are not playing now we send that change
-    (Playing _ _,    Y.Stopped) -> return (Right Nothing, NotPlaying)
-    (Playing _ _,    Y.Paused)  -> return (Right Nothing, NotPlaying)
+    (Playing _ _,     Y.Stopped) -> return (Right Nothing, NotPlaying)
+    (Playing _ _,     Y.Paused)  -> return (Right Nothing, NotPlaying)
     -- If we were playing and are playing everything become complicated
     (Playing song ts, Y.Playing) -> do
       Just song' <- Y.currentSong

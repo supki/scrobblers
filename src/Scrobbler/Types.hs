@@ -46,4 +46,5 @@ data Player
 data Error
   = NoCandidate
   | NoScrobble
+  | FailedScrobble
     deriving (Show, Read, Eq, Ord, Enum, Bounded)
