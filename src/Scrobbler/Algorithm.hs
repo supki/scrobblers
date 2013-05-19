@@ -59,10 +59,13 @@ getTag tag tags = tags ^. ix tag . _head . to Y.toText
 -- | Check if candidate is ready to be scrobbled
 --
 -- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
-contest :: Wire Error m (Int64, Change) Track
-contest = mkState Nothing $ \_dt ((t, ch), tr) -> (maybe (Left NoScrobble) (contest' t) tr, ch)
+contest :: Monad m => Wire Error m Change Track
+contest = contest' . ((round <$> time) &&& id)
+
+contest' :: Wire Error m (Int64, Change) Track
+contest' = mkState Nothing $ \_dt ((t, ch), tr) -> (maybe (Left NoScrobble) (go t) tr, ch)
  where
-  contest' t tr
+  go t tr
     -- If candidate length is less than 30 seconds, we do not scrobble it
     | tr^.length < 30 = Left NoScrobble
     -- Otherwise, if the time passed since is more than half candidate lenght it's

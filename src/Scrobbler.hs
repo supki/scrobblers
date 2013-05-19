@@ -8,7 +8,7 @@ module Scrobbler
 
 import Control.Concurrent (threadDelay)
 import Control.Exception (catch)
-import Control.Monad (liftM, void)
+import Control.Monad (forever, liftM, void)
 import Data.Int (Int64)
 import Prelude hiding ((.), (**), id, length)
 
@@ -33,16 +33,16 @@ data Credentials = Credentials
 
 -- | Application loop
 scrobbler :: Credentials -> IO ()
-scrobbler cs =
-  void (Y.withMPD (loop' (scrobble cs . contest . time' ** announce cs . candidate . time') clockSession))
+scrobbler cs = forever $
+  void (Y.withMPD (loop' (scrobble cs . contest . announce cs . candidate . time') clockSession))
  `catch`
-  \(_ :: SomeException) -> scrobbler cs
+  \(_ :: SomeException) -> return ()
  where
   loop' :: Wire Error Y.MPD () () -> Session Y.MPD -> Y.MPD ()
   loop' w' session' = do
     (mx, w, session) <- stepSession w' session' ()
     case mx of
-      Right () -> io (putStrLn "Successfully scrobbled!")
+      Right () -> io (putStrLn "* Successfully scrobbled!")
       _        -> return ()
     io (threadDelay 1000000)
     loop' w session
@@ -50,7 +50,9 @@ scrobbler cs =
 -- | Scrobble track
 scrobble :: MonadIO m => Credentials -> Wire Error m Track ()
 scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $
-  \_dt Track { _artist = ar, _title = t, _album = al } -> do
+  \_dt tr@Track { _artist = ar, _title = t, _album = al } -> do
+    io (putStrLn "* Scrobble:")
+    io (putStrLn (pretty tr))
     ts <- (read . formatTime defaultTimeLocale "%s") `liftM` io getCurrentTime
     r <- io . L.lastfm . L.sign s $
       T.scrobble <*> L.artist ar <*> L.track t <*> L.timestamp ts <* L.album al <*>
@@ -61,9 +63,11 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $
 
 -- | Update user lastfm profile page
 announce :: MonadIO m => Credentials -> Wire e m Change Change
-announce Credentials{secret = s, apiKey = ak, sessionKey = sk} = mkFixM $ \_dt ch -> case ch of
-  Just tr -> go tr >> io (print tr) >> return (Right ch)
-  Nothing -> io (putStrLn "Player is idle") >> return (Right ch)
+announce Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $ \_dt ch -> do
+  io (putStrLn "* Announce:")
+  case ch of
+    Just tr -> go tr >> io (putStrLn (pretty tr)) >> return (Right ch)
+    Nothing -> io (putStrLn "  Player is idle.") >> return (Right ch)
  where
   go Track { _artist = ar, _title = t, _album = al, _length = l } = io . L.lastfm . L.sign s $
     T.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*>
@@ -72,11 +76,6 @@ announce Credentials{secret = s, apiKey = ak, sessionKey = sk} = mkFixM $ \_dt c
 
 io :: MonadIO m => IO a -> m a
 io = liftIO
-
-
-infixr 9 **
-(**) :: Applicative m => m a -> m b -> m (a, b)
-(**) = liftA2 (,)
 
 
 time' :: Monad m => Wire e m () Int64
