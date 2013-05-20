@@ -28,12 +28,9 @@ scrobbler cs = forever $
  `catch`
   \(_ :: SomeException) -> return ()
  where
-  loop' :: Wire Error Y.MPD () () -> Session Y.MPD -> Y.MPD ()
+  loop' :: Wire Error Y.MPD () Success -> Session Y.MPD -> Y.MPD ()
   loop' w' session' = do
-    (mx, w, session) <- stepSession w' session' ()
-    case mx of
-      Right () -> liftIO (putStrLn "* Successfully scrobbled!")
-      _        -> return ()
+    (_, w, session) <- stepSession w' session' ()
     liftIO (threadDelay 1000000)
     loop' w session
 

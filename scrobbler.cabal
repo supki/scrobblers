@@ -19,6 +19,7 @@ library
   exposed-modules:   Scrobbler
   other-modules:     Scrobbler.Algorithm
                      Scrobbler.Lastfm
+                     Scrobbler.Announce
                      Scrobbler.Types
   build-depends:
     base >= 4 && < 5,

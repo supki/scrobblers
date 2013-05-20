@@ -66,10 +66,10 @@ getTag tag tags = tags ^. ix tag . _head . to Y.toText
 -- | Check if candidate is ready to be scrobbled
 --
 -- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
-contest :: Monad m => Wire Error m (PlayerStateChange Track) Track
+contest :: Monad m => Wire Error m (PlayerStateChange Track) (Scrobble Track)
 contest = contest' . ((round <$> time) &&& id)
 
-contest' :: Wire Error m (Int64, PlayerStateChange Track) Track
+contest' :: Wire Error m (Int64, PlayerStateChange Track) (Scrobble Track)
 contest' = mkState Stopped $ \_dt ((t, ch), tr) -> (change (Left NoScrobble) (go t) tr, ch)
  where
   go t tr
@@ -77,9 +77,9 @@ contest' = mkState Stopped $ \_dt ((t, ch), tr) -> (change (Left NoScrobble) (go
     | tr^.length < 30 = Left NoScrobble
     -- Otherwise, if the time passed since is more than half candidate lenght it's
     -- definitely should be scrobbled
-    | t - tr^.timestamp > tr^.length `div` 2 = Right tr
+    | t - tr^.timestamp > tr^.length `div` 2 = Right (Scrobble tr)
     -- Otherwise, if the passed is more than 4 minutes it's should be scrobbled anyway
-    | t - tr^.timestamp > 4 * 60 = Right tr
+    | t - tr^.timestamp > 4 * 60 = Right (Scrobble tr)
     -- Otherwise there is nothing to scrobble
     | otherwise = Left NoScrobble
 

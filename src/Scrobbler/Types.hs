@@ -1,18 +1,14 @@
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 -- | Various types used in scrobbler
 module Scrobbler.Types where
 
 import Data.Int (Int64)
-import Data.Monoid ((<>))
 
 import           Control.Lens
 import           Data.Default (Default(..))
 import           Data.Text (Text)
-import qualified Data.Text as T
 import qualified Network.Lastfm as L
-import qualified Network.MPD as Y
 
 
 -- | Change in 'Player' state
@@ -20,6 +16,7 @@ import qualified Network.MPD as Y
 -- We need it because we want to capture pausing/stopping
 -- the player as well as chaning tracks
 data PlayerStateChange a = Started a | Stopped
+    deriving (Show, Read)
 
 -- | Track information
 data Track = Track
@@ -42,10 +39,12 @@ instance Default Track where
     }
 
 -- | Successfully completed scrobble round
-data Success
+data Success = Success
+    deriving (Show, Read)
 
 -- | What to scrobble
 newtype Scrobble a = Scrobble a
+    deriving (Show, Read)
 
 
 -- | Scrobbler errors
@@ -56,19 +55,9 @@ data Error
     deriving (Show, Read, Eq, Ord, Enum, Bounded)
 
 
-class Pretty a where
-  pretty :: a -> String
-
-instance Pretty Track where
-  pretty Track { _title, _artist, _album } = T.unpack $
-    "  " <> _title <> " by " <> _artist <> " from " <> _album
-
-ppretty :: Pretty a => a -> IO ()
-ppretty = putStrLn . pretty
-
-
+-- | Lastfm API credentials
 data Credentials = Credentials
   { apiKey :: Text
   , sessionKey :: Text
   , secret :: L.Secret
-  }
+  } deriving (Show)
