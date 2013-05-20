@@ -54,12 +54,17 @@ data Error
   | FailedScrobble
     deriving (Show, Read, Eq, Ord, Enum, Bounded)
 
+
 class Pretty a where
   pretty :: a -> String
 
 instance Pretty Track where
   pretty Track { _title, _artist, _album } = T.unpack $
     "  " <> _title <> " by " <> _artist <> " from " <> _album
+
+ppretty :: Pretty a => a -> IO ()
+ppretty = putStrLn . pretty
+
 
 data Credentials = Credentials
   { apiKey :: Text
