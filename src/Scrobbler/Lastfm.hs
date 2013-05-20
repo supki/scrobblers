@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 module Scrobbler.Lastfm
-  ( announce
+  ( updateNowPlaying
   , scrobble
   ) where
 
@@ -17,15 +17,13 @@ import qualified Network.Lastfm as L
 import qualified Network.Lastfm.Track as T
 import           System.Locale (defaultTimeLocale)
 
-import Scrobbler.Announce
 import Scrobbler.Types
 
 
 -- | Scrobble track
 scrobble :: MonadIO m => Credentials -> Wire Error m (Scrobble Track) Success
 scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $
-  \_dt sc@(Scrobble Track { _artist = ar, _title = t, _album = al }) -> liftIO $ do
-    ppretty sc
+  \_dt (Scrobble Track { _artist = ar, _title = t, _album = al }) -> liftIO $ do
     ts <- (read . formatTime defaultTimeLocale "%s") `liftM` getCurrentTime
     -- | We do not care if lastfm request fails, but actually we should
     r <- tryLastfm . L.sign s $
@@ -37,9 +35,8 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $
 
 
 -- | Update lastfm user profile page 'now playing' status
-announce :: MonadIO m => Credentials -> Wire e m (PlayerStateChange Track) (PlayerStateChange Track)
-announce Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $ \_dt ch -> liftIO $ do
-  ppretty ch
+updateNowPlaying :: MonadIO m => Credentials -> Wire e m (PlayerStateChange Track) (PlayerStateChange Track)
+updateNowPlaying Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $ \_dt ch -> liftIO $ do
   -- Change might be either new candidate or stopped player notification
   case ch of
     -- If it is new candidate we tell lastfm about it and also announce in stddout

@@ -17,6 +17,7 @@ import           Control.Wire
 import qualified Network.MPD as Y
 
 import Scrobbler.Algorithm
+import Scrobbler.Announce
 import Scrobbler.Lastfm
 import Scrobbler.Types
 
@@ -24,7 +25,10 @@ import Scrobbler.Types
 -- | Application loop
 scrobbler :: Credentials -> IO ()
 scrobbler cs = forever $
-  void (Y.withMPD (loop' (scrobble cs . contest . announce cs . candidate . time') clockSession))
+  void (Y.withMPD
+    (loop' (announce . scrobble cs .
+      announce . contest .
+      announce . updateNowPlaying cs . candidate . time') clockSession))
  `catch`
   \(_ :: SomeException) -> return ()
  where

@@ -14,7 +14,7 @@ import Scrobbler.Types
 
 
 -- | MPD state
-data Player
+data MPD
   = Playing Y.Song Int64 -- ^ Candidate for scrobbling record
   | NotPlaying           -- ^ Being stopped or paused
     deriving (Show, Eq)
