@@ -21,8 +21,11 @@ data MPD
 
 
 -- | Look for player state changes over time
-candidate :: Wire Error Y.MPD Int64 (PlayerStateChange Track)
-candidate = mkStateM NotPlaying $ \_dt (t, s) ->
+candidate :: Wire Error Y.MPD () (PlayerStateChange Track)
+candidate = candidate' . time'
+
+candidate' :: Wire Error Y.MPD Int64 (PlayerStateChange Track)
+candidate' = mkStateM NotPlaying $ \_dt (t, s) ->
   Y.stState `fmap` Y.status >>= \s' -> case (s, s') of
     -- If we were not playing and are not playing now there is no candidate to send
     (NotPlaying, Y.Stopped) -> return (Left NoCandidate, NotPlaying)
@@ -67,7 +70,7 @@ getTag tag tags = tags ^. ix tag . _head . to Y.toText
 --
 -- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
 contest :: Monad m => Wire Error m (PlayerStateChange Track) (Scrobble Track)
-contest = contest' . ((round <$> time) &&& id)
+contest = contest' . (time' &&& id)
 
 contest' :: Wire Error m (Int64, PlayerStateChange Track) (Scrobble Track)
 contest' = mkState Stopped $ \_dt ((t, ch), tr) -> (change (Left NoScrobble) (go t) tr, ch)
@@ -86,3 +89,7 @@ contest' = mkState Stopped $ \_dt ((t, ch), tr) -> (change (Left NoScrobble) (go
 change :: b -> (a -> b) -> PlayerStateChange a -> b
 change _ f (Started a) = f a
 change b _           _ = b
+
+
+time' :: Monad m => Wire e m a Int64
+time' = round <$> time

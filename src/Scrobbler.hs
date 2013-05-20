@@ -9,11 +9,10 @@ module Scrobbler
 import Control.Concurrent (threadDelay)
 import Control.Exception (catch)
 import Control.Monad (forever, void)
-import Data.Int (Int64)
 import Prelude hiding ((.), id)
 
 import           Control.Monad.Trans (MonadIO, liftIO)
-import           Control.Wire
+import           Control.Wire hiding (loop)
 import qualified Network.MPD as Y
 
 import Scrobbler.Algorithm
@@ -24,20 +23,16 @@ import Scrobbler.Types
 
 -- | Application loop
 scrobbler :: Credentials -> IO ()
-scrobbler cs = forever $
-  void (Y.withMPD
-    (loop' (announce . scrobble cs .
-      announce . contest .
-      announce . updateNowPlaying cs . candidate . time') clockSession))
- `catch`
-  \(_ :: SomeException) -> return ()
+scrobbler cs = forever $ void (Y.withMPD (loop' loop clockSession)) `catch` \(_ :: SomeException) -> return ()
  where
+  loop =
+    announce . scrobble cs .
+    announce . contest .
+    announce . updateNowPlaying cs .
+    candidate
+
   loop' :: Wire Error Y.MPD () Success -> Session Y.MPD -> Y.MPD ()
   loop' w' session' = do
     (_, w, session) <- stepSession w' session' ()
     liftIO (threadDelay 1000000)
     loop' w session
-
-
-time' :: Monad m => Wire e m () Int64
-time' = round <$> time
