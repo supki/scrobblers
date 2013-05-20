@@ -18,6 +18,7 @@ library
   hs-source-dirs:    src
   exposed-modules:   Scrobbler
   other-modules:     Scrobbler.Algorithm
+                     Scrobbler.Algorithm.MPD
                      Scrobbler.Lastfm
                      Scrobbler.Announce
                      Scrobbler.Types

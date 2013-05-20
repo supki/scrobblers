@@ -11,11 +11,10 @@ import Control.Exception (catch)
 import Control.Monad (forever, void)
 import Prelude hiding ((.), id)
 
-import           Control.Monad.Trans (MonadIO, liftIO)
-import           Control.Wire hiding (loop)
-import qualified Network.MPD as Y
+import Control.Wire hiding (loop)
 
 import Scrobbler.Algorithm
+import Scrobbler.Algorithm.MPD
 import Scrobbler.Announce
 import Scrobbler.Lastfm
 import Scrobbler.Types
@@ -23,7 +22,7 @@ import Scrobbler.Types
 
 -- | Application loop
 scrobbler :: Credentials -> IO ()
-scrobbler cs = forever $ void (Y.withMPD (loop' loop clockSession)) `catch` \(_ :: SomeException) -> return ()
+scrobbler cs = forever $ void (loop' loop clockSession) `catchAll` \_ -> return ()
  where
   loop =
     announce . scrobble cs .
@@ -31,8 +30,13 @@ scrobbler cs = forever $ void (Y.withMPD (loop' loop clockSession)) `catch` \(_ 
     announce . updateNowPlaying cs .
     candidate
 
-  loop' :: Wire Error Y.MPD () Success -> Session Y.MPD -> Y.MPD ()
-  loop' w' session' = do
-    (_, w, session) <- stepSession w' session' ()
-    liftIO (threadDelay 1000000)
-    loop' w session
+
+loop' :: Wire Error IO () Success -> Session IO -> IO ()
+loop' w' session' = do
+  (_, w, session) <- stepSession w' session' ()
+  threadDelay 1000000
+  loop' w session
+
+
+catchAll :: IO a -> (SomeException -> IO a) -> IO a
+catchAll = catch
