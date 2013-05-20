@@ -11,6 +11,7 @@ import           Control.Lens
 import           Data.Default (Default(..))
 import           Data.Text (Text)
 import qualified Data.Text as T
+import qualified Network.Lastfm as L
 import qualified Network.MPD as Y
 
 
@@ -59,3 +60,9 @@ class Pretty a where
 instance Pretty Track where
   pretty Track { _title, _artist, _album } = T.unpack $
     "  " <> _title <> " by " <> _artist <> " from " <> _album
+
+data Credentials = Credentials
+  { apiKey :: Text
+  , sessionKey :: Text
+  , secret :: L.Secret
+  }
