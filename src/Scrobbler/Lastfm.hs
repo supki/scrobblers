@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+-- | Lastfm interaction
 module Scrobbler.Lastfm
   ( updateNowPlaying
   , scrobble
@@ -25,7 +26,7 @@ scrobble :: MonadIO m => Credentials -> Wire Error m (Scrobble Track) Success
 scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $
   \_dt (Scrobble Track { _artist = ar, _title = t, _album = al }) -> liftIO $ do
     ts <- (read . formatTime defaultTimeLocale "%s") `liftM` getCurrentTime
-    -- | We do not care if lastfm request fails, but actually we should
+    -- We do not care if lastfm request fails, but actually we should
     r <- tryLastfm . L.sign s $
       T.scrobble <*> L.artist ar <*> L.track t <*> L.timestamp ts <* L.album al <*>
       L.apiKey ak <*> L.sessionKey sk <* L.json

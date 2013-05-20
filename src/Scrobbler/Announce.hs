@@ -1,5 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+-- | Log information about scrobbling process
 module Scrobbler.Announce
   ( Announce(..)
   , pprint
