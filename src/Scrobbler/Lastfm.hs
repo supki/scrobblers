@@ -37,18 +37,18 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $
 
 
 -- | Update lastfm user profile page 'now playing' status
-announce :: MonadIO m => Credentials -> Wire e m Change Change
+announce :: MonadIO m => Credentials -> Wire e m (PlayerStateChange Track) (PlayerStateChange Track)
 announce Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $ \_dt ch -> liftIO $ do
   putStrLn "* Announce:"
   -- Change might be either new candidate or stopped player notification
   case ch of
     -- If it is new candidate we tell lastfm about it and also announce in stddout
-    Just tr -> do
+    Started tr -> do
       ppretty tr
       -- We do not care if lastfm request fails, so be it:
       -- User.updateNowPlaying is not essential for scrobbling
       go tr
-    Nothing ->
+    Stopped ->
       putStrLn "  Player is idle."
   return (Right ch)
  where

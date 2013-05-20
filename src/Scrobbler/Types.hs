@@ -15,11 +15,11 @@ import qualified Network.Lastfm as L
 import qualified Network.MPD as Y
 
 
--- | Change in 'Player' behaviour
+-- | Change in 'Player' state
 --
 -- We need it because we want to capture pausing/stopping
 -- the player as well as chaning tracks
-type Change = Maybe Track
+data PlayerStateChange a = Started a | Stopped
 
 -- | Track information
 data Track = Track
@@ -41,11 +41,12 @@ instance Default Track where
     , _length    = 0
     }
 
--- | Player state
-data Player
-  = Playing Y.Song Int64 -- ^ Candidate for scrobbling record
-  | NotPlaying           -- ^ Being stopped or paused
-    deriving (Show, Eq)
+-- | Successfully completed scrobble round
+data Success
+
+-- | What to scrobble
+newtype Scrobble a = Scrobble a
+
 
 -- | Scrobbler errors
 data Error

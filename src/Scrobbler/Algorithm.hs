@@ -13,8 +13,15 @@ import qualified Network.MPD as Y
 import Scrobbler.Types
 
 
+-- | MPD state
+data Player
+  = Playing Y.Song Int64 -- ^ Candidate for scrobbling record
+  | NotPlaying           -- ^ Being stopped or paused
+    deriving (Show, Eq)
+
+
 -- | Look for player state changes over time
-candidate :: Wire Error Y.MPD Int64 Change
+candidate :: Wire Error Y.MPD Int64 (PlayerStateChange Track)
 candidate = mkStateM NotPlaying $ \_dt (t, s) ->
   Y.stState `fmap` Y.status >>= \s' -> case (s, s') of
     -- If we were not playing and are not playing now there is no candidate to send
@@ -23,22 +30,22 @@ candidate = mkStateM NotPlaying $ \_dt (t, s) ->
     -- If we started playing just now there is a candidate to send
     (NotPlaying, Y.Playing) -> do
       Just song <- Y.currentSong
-      return (Right (Just (fetchTrackData song & timestamp .~ t)), Playing song t)
+      return (Right (Started (fetchTrackData song & timestamp .~ t)), Playing song t)
     -- If we were playing and are not playing now we send that change
-    (Playing _ _,     Y.Stopped) -> return (Right Nothing, NotPlaying)
-    (Playing _ _,     Y.Paused)  -> return (Right Nothing, NotPlaying)
+    (Playing _ _,     Y.Stopped) -> return (Right Stopped, NotPlaying)
+    (Playing _ _,     Y.Paused)  -> return (Right Stopped, NotPlaying)
     -- If we were playing and are playing everything become complicated
     (Playing song ts, Y.Playing) -> do
       Just song' <- Y.currentSong
       -- If the songs are different, then new song is a candidate to send
       if song /= song' then
-        return (Right (Just (fetchTrackData song' & timestamp .~ t)), Playing song' t)
+        return (Right (Started (fetchTrackData song' & timestamp .~ t)), Playing song' t)
       else
         -- Otherwise, if song has been played more then its duration
         -- it means that its looped, so we send it as candidate once again
         let ts' = ts + fromIntegral (Y.sgLength song)
         in if ts + fromIntegral (Y.sgLength song) < t
-          then return (Right (Just (fetchTrackData song' & timestamp .~ ts')), Playing song' ts')
+          then return (Right (Started (fetchTrackData song' & timestamp .~ ts')), Playing song' ts')
           -- Otherwise, there is no candidate to send
           else return (Left NoCandidate, s)
 
@@ -59,11 +66,11 @@ getTag tag tags = tags ^. ix tag . _head . to Y.toText
 -- | Check if candidate is ready to be scrobbled
 --
 -- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
-contest :: Monad m => Wire Error m Change Track
+contest :: Monad m => Wire Error m (PlayerStateChange Track) Track
 contest = contest' . ((round <$> time) &&& id)
 
-contest' :: Wire Error m (Int64, Change) Track
-contest' = mkState Nothing $ \_dt ((t, ch), tr) -> (maybe (Left NoScrobble) (go t) tr, ch)
+contest' :: Wire Error m (Int64, PlayerStateChange Track) Track
+contest' = mkState Stopped $ \_dt ((t, ch), tr) -> (change (Left NoScrobble) (go t) tr, ch)
  where
   go t tr
     -- If candidate length is less than 30 seconds, we do not scrobble it
@@ -75,3 +82,7 @@ contest' = mkState Nothing $ \_dt ((t, ch), tr) -> (maybe (Left NoScrobble) (go 
     | t - tr^.timestamp > 4 * 60 = Right tr
     -- Otherwise there is nothing to scrobble
     | otherwise = Left NoScrobble
+
+change :: b -> (a -> b) -> PlayerStateChange a -> b
+change _ f (Started a) = f a
+change b _           _ = b
