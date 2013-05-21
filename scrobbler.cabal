@@ -21,6 +21,7 @@ library
   other-modules:     Scrobbler.Main
                      Scrobbler.Algorithm
                      Scrobbler.Lastfm
+                     Scrobbler.Network
                      Scrobbler.Announce
                      Scrobbler.Types
   build-depends:
