@@ -7,6 +7,7 @@ module Scrobbler.Lastfm
 
 import Control.Exception (try)
 import Control.Monad (liftM, void)
+import Data.Traversable (Traversable, traverse)
 import Prelude hiding ((.), id)
 
 import           Control.Monad.Trans (MonadIO, liftIO)
@@ -36,20 +37,13 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $
 
 
 -- | Update lastfm user profile page 'now playing' status
-updateNowPlaying :: MonadIO m => Credentials -> Wire e m (PlayerStateChange Track) (PlayerStateChange Track)
-updateNowPlaying Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkFixM $ \_dt ch -> liftIO $ do
-  -- Change might be either new candidate or stopped player notification
-  case ch of
-    -- If it is new candidate we tell lastfm about it and also announce in stddout
-    Started tr -> do
-      -- We do not care if lastfm request fails, so be it:
-      -- User.updateNowPlaying is not essential for scrobbling
-      go tr
-    Stopped ->
-      return ()
-  return (Right ch)
+updateNowPlaying :: (Traversable f, MonadIO m) => Credentials -> Wire Error m (f Track) (f Track)
+updateNowPlaying Credentials { secret = s, apiKey = ak, sessionKey = sk } =
+  mkFixM $ \_dt -> liftIO . liftM Right . traverse (\t -> f t >> return t)
  where
-  go Track { _artist = ar, _title = t, _album = al, _length = l } = void . tryLastfm . L.sign s $
+  -- We do not care if lastfm request fails, so be it:
+  -- User.updateNowPlaying is not essential for scrobbling
+  f Track { _artist = ar, _title = t, _album = al, _length = l } = void . tryLastfm . L.sign s $
     T.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*>
     L.apiKey ak <*> L.sessionKey sk <* L.json
 

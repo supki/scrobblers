@@ -3,7 +3,10 @@
 -- | Various types used in scrobbler
 module Scrobbler.Types where
 
+import Control.Applicative (Applicative(..), (<$>))
+import Data.Foldable (Foldable(..))
 import Data.Int (Int64)
+import Data.Monoid (mempty)
 
 import           Control.Lens
 import           Data.Default (Default(..))
@@ -17,6 +20,19 @@ import qualified Network.Lastfm as L
 -- the player as well as chaning tracks
 data PlayerStateChange a = Started a | Stopped
     deriving (Show, Read)
+
+instance Functor PlayerStateChange where
+  fmap f (Started a) = Started (f a)
+  fmap _     Stopped = Stopped
+
+instance Foldable PlayerStateChange where
+  foldMap f (Started a) = f a
+  foldMap _     Stopped = mempty
+
+instance Traversable PlayerStateChange where
+  traverse f (Started a) = Started <$> f a
+  traverse _     Stopped = pure Stopped
+
 
 -- | Track information
 data Track = Track
@@ -38,6 +54,7 @@ instance Default Track where
     , _length    = 0
     }
 
+
 -- | Successfully completed scrobble round
 data Success = Success
     deriving (Show, Read)
@@ -45,6 +62,15 @@ data Success = Success
 -- | What to scrobble
 newtype Scrobble a = Scrobble a
     deriving (Show, Read)
+
+instance Functor Scrobble where
+  fmap f (Scrobble a) = Scrobble (f a)
+
+instance Foldable Scrobble where
+  foldMap f (Scrobble a) = f a
+
+instance Traversable Scrobble where
+  traverse f (Scrobble a) = Scrobble <$> f a
 
 
 -- | Scrobbler errors
