@@ -55,9 +55,19 @@ instance Default Track where
     }
 
 
--- | Successfully completed scrobble round
-data Success = Success
+-- | Successful scrobbles
+newtype Successes a = Successes [a]
     deriving (Show, Read)
+
+instance Functor Successes where
+  fmap f (Successes a) = Successes (fmap f a)
+
+instance Foldable Successes where
+  foldMap f (Successes a) = foldMap f a
+
+instance Traversable Successes where
+  traverse f (Successes a) = Successes <$> traverse f a
+
 
 -- | What to scrobble
 newtype Scrobble a = Scrobble a
@@ -76,7 +86,7 @@ instance Traversable Scrobble where
 -- | Scrobbler errors
 data Error
   = NoCandidate
-  | NoScrobble
+  | NoScrobbles
   | FailedScrobble
     deriving (Show, Read, Eq, Ord, Enum, Bounded)
 

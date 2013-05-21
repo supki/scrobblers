@@ -11,16 +11,16 @@ import Prelude hiding ((.), id)
 
 import Control.Wire hiding (loop)
 
-import Scrobbler.Types (Error, Success)
+import Scrobbler.Types (Error)
 
 
 -- | Application loop
 -- scrobbler :: (MonadException m, MonadIO m) => Wire Error m () Success -> m ()
-scrobbler :: Wire Error IO () Success -> IO ()
+scrobbler :: Wire Error IO () a -> IO ()
 scrobbler loop = forever $ void (loop' loop clockSession) `catchAll` \_ -> return ()
 
 
-loop' :: MonadIO m => Wire Error m () Success -> Session m -> m ()
+loop' :: MonadIO m => Wire Error m () a -> Session m -> m ()
 loop' w' session' = do
   (_, w, session) <- stepSession w' session' ()
   liftIO (threadDelay 1000000)

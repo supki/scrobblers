@@ -7,6 +7,7 @@ module Scrobbler.Announce
   , announce
   ) where
 
+import Data.List (intercalate)
 import Data.Monoid ((<>))
 import Prelude hiding ((.), id)
 
@@ -31,10 +32,10 @@ instance Announce a => Announce (PlayerStateChange a) where
   message (Started p) = "* Started:\n" <> message p
 
 instance Announce a => Announce (Scrobble a) where
-  message (Scrobble p) = "* Scrobble:\n" <> message p
+  message (Scrobble p) = "* Scrobble candidate:\n" <> message p
 
-instance Announce Success where
-  message Success = "* Successfully scrobbled!"
+instance Announce a => Announce (Successes a) where
+  message (Successes ps) = intercalate "\n" ("* Successfully scrobbled:" : fmap message ps)
 
 
 -- | Announce in 'IO'
