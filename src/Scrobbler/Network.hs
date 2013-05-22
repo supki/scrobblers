@@ -1,6 +1,9 @@
 module Scrobbler.Network
-  ( send, receive
+  ( -- * Networking
+    send, receive
+    -- * Ennetworking
   , encrypt, serialize
+    -- * Denetworking
   , decrypt, deserialize
   ) where
 
@@ -12,7 +15,7 @@ import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import           Crypto.Random (SystemRandom, newGenIO)
 import           Data.ByteString.Lazy (ByteString)
-import           Data.Serialize (decodeLazy, encodeLazy)
+import           Data.Serialize (Serialize, decodeLazy, encodeLazy)
 -- import qualified Data.ByteString.Lazy as B
 
 import Scrobbler.Types
@@ -38,8 +41,8 @@ encrypt k = encrypt' . serialize
     return (Right bs', Just g')
 
 
--- | 'Serialize' 'Track' for network transmission
-serialize :: Monad m => Wire e m Track ByteString
+-- | 'Serialize' datum for network transmission
+serialize :: (Serialize a, Monad m) => Wire e m a ByteString
 serialize = arr encodeLazy
 
 
@@ -48,6 +51,6 @@ decrypt :: Monad m => PrivateKey -> Wire Error m ByteString Track
 decrypt k = deserialize . arr (RSA.decrypt k)
 
 
--- | Deserialize 'Track' after network transmission
-deserialize :: Monad m => Wire Error m ByteString Track
+-- | De'Serialize' datum after network transmission
+deserialize :: (Serialize b, Monad m) => Wire Error m ByteString b
 deserialize = mkFix $ \_dt -> left NoDecoding . decodeLazy
