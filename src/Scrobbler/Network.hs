@@ -12,6 +12,7 @@ import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import           Crypto.Random (SystemRandom, newGenIO)
 import           Data.ByteString.Lazy (ByteString)
+import           Data.Serialize (decodeLazy, encodeLazy)
 -- import qualified Data.ByteString.Lazy as B
 
 import Scrobbler.Types
@@ -37,16 +38,16 @@ encrypt k = encrypt' . serialize
     return (Right bs', Just g')
 
 
--- | Serialize 'Track' for network transmission
+-- | 'Serialize' 'Track' for network transmission
 serialize :: Monad m => Wire e m Track ByteString
-serialize = arr undefined
+serialize = arr encodeLazy
 
 
 -- | Encrypt 'Track' with RSA
-decrypt :: Monad m => PrivateKey -> Wire e m ByteString Track
+decrypt :: Monad m => PrivateKey -> Wire Error m ByteString Track
 decrypt k = deserialize . arr (RSA.decrypt k)
 
 
 -- | Deserialize 'Track' after network transmission
-deserialize :: Monad m => Wire e m ByteString Track
-deserialize = arr undefined
+deserialize :: Monad m => Wire Error m ByteString Track
+deserialize = mkFix $ \_dt -> left NoDecoding . decodeLazy

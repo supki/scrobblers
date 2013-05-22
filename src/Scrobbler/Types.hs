@@ -7,10 +7,13 @@ import Control.Applicative (Applicative(..), (<$>))
 import Data.Foldable (Foldable(..))
 import Data.Int (Int64)
 import Data.Monoid (mempty)
+import Prelude hiding (length)
 
 import           Control.Lens
 import           Data.Default (Default(..))
+import           Data.Serialize (Serialize(..))
 import           Data.Text (Text)
+import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
 import qualified Network.Lastfm as L
 
 
@@ -56,6 +59,29 @@ instance Default Track where
     , _local  = 0
     }
 
+instance Serialize Track where
+  put tr = do
+    put (tr^.start)
+    put (tr^.title.to encodeUtf8)
+    put (tr^.artist.to encodeUtf8)
+    put (tr^.album.to encodeUtf8)
+    put (tr^.length)
+    put (tr^.local)
+  get = do
+    st <- get
+    Right ar <- decodeUtf8' <$> get
+    Right ti <- decodeUtf8' <$> get
+    Right al <- decodeUtf8' <$> get
+    le <- get
+    lo <- get
+    return $ def
+      & start .~ st
+      & artist .~ ar
+      & title .~ ti
+      & album .~ al
+      & length .~ le
+      & local .~ lo
+
 
 -- | Successful scrobbles
 newtype Successes a = Successes [a]
@@ -90,7 +116,8 @@ data Error
   = NoCandidate
   | NoScrobbles
   | FailedScrobble
-    deriving (Show, Read, Eq, Ord, Enum, Bounded)
+  | NoDecoding String
+    deriving (Show, Read, Eq, Ord)
 
 
 -- | Lastfm API credentials
