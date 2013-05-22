@@ -9,7 +9,7 @@ module Scrobbler.Lastfm
 import Control.Exception (try)
 import Control.Monad (liftM, void)
 import Data.Foldable (Foldable, toList)
-import Prelude hiding ((.), id)
+import Prelude hiding ((.), id, length)
 
 import           Control.Lens
 import           Control.Lens.Aeson
@@ -17,7 +17,6 @@ import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import qualified Data.Aeson as A
 import           Data.ByteString.Lazy (fromStrict)
-import           Data.Time.Clock.POSIX (getPOSIXTime)
 import           Network.HTTP.Conduit (HttpException(..))
 import           Network.HTTP.Types
 import qualified Network.Lastfm as L
@@ -36,9 +35,9 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
 
   go' :: [Track] -> [Track] -> [Track] -> IO ([Track], [Track])
   go' tss@(t:ts) ss fs = do
-    ti <- round <$> getPOSIXTime
     r <- try . L.lastfm . L.sign s $ T.scrobble <*>
-      L.artist (t^.artist) <*> L.track (t^.title) <*> L.timestamp ti <* L.album (t^.album) <*>
+      L.artist (t^.artist) <*> L.track (t^.title) <*> L.timestamp (t^.local + t^.length) <*
+      L.album (t^.album) <*>
       L.apiKey ak <*> L.sessionKey sk <* L.json
     -- So last.fm request may fail and there is a couple of reasons for it to do so
     case r of

@@ -37,22 +37,24 @@ instance Traversable PlayerStateChange where
 
 -- | Track information
 data Track = Track
-  { _timestamp :: Int64 -- ^ playing start timestamp
-  , _title     :: Text  -- ^ title
-  , _artist    :: Text  -- ^ artist
-  , _album     :: Text  -- ^ album title (optional)
-  , _length    :: Int64 -- ^ duration
+  { _start  :: Int64 -- ^ timestamp since scrobbler start
+  , _title  :: Text  -- ^ title
+  , _artist :: Text  -- ^ artist
+  , _album  :: Text  -- ^ album title (optional)
+  , _length :: Int64 -- ^ duration
+  , _local  :: Int64 -- ^ timestamp since epoch
   } deriving (Show, Read, Eq, Ord)
 
 makeLenses ''Track
 
 instance Default Track where
   def = Track
-    { _timestamp = 0
-    , _artist    = ""
-    , _title     = ""
-    , _album     = ""
-    , _length    = 0
+    { _start  = 0
+    , _artist = ""
+    , _title  = ""
+    , _album  = ""
+    , _length = 0
+    , _local  = 0
     }
 
 

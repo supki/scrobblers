@@ -13,6 +13,7 @@ import           Control.Wire
 import           Data.Default (def)
 import           Data.Map (Map)
 import           Data.Text (Text)
+import           Data.Time.Clock.POSIX (getPOSIXTime)
 import qualified Network.MPD as Y
 
 import Scrobbler.Algorithm
@@ -32,6 +33,7 @@ candidate = candidate' . time'
 
 candidate' :: MonadIO m => Wire Error m Int64 (PlayerStateChange Track)
 candidate' = mkStateM NotPlaying $ \_dt (t, s) -> liftIO $ do
+  lt <- round <$> getPOSIXTime
   -- Wait 5 seconds to complete query. That should be enough
   r <- timeout 5000000 . Y.withMPD $ do
     Y.stState `fmap` Y.status >>= \s' -> case (s, s') of
@@ -41,7 +43,7 @@ candidate' = mkStateM NotPlaying $ \_dt (t, s) -> liftIO $ do
       -- If we started playing just now there is a candidate to send
       (NotPlaying, Y.Playing) -> do
         Just song <- Y.currentSong
-        return (Right (Started (fetchTrackData song & timestamp .~ t)), Playing song t)
+        return (Right (Started (fetchTrackData song & start .~ t & local .~ lt)), Playing song t)
       -- If we were playing and are not playing now we send that change
       (Playing _ _,     Y.Stopped) -> return (Right Stopped, NotPlaying)
       (Playing _ _,     Y.Paused)  -> return (Right Stopped, NotPlaying)
@@ -50,15 +52,15 @@ candidate' = mkStateM NotPlaying $ \_dt (t, s) -> liftIO $ do
         Just song' <- Y.currentSong
         -- If the songs are different, then new song is a candidate to send
         if song /= song' then
-          return (Right (Started (fetchTrackData song' & timestamp .~ t)), Playing song' t)
+          return (Right (Started (fetchTrackData song' & start .~ t & local .~ lt)), Playing song' t)
         else
           -- Otherwise, if song has been played more then its duration
           -- it means that its looped, so we send it as candidate once again
           let ts' = ts + fromIntegral (Y.sgLength song)
-          in if ts + fromIntegral (Y.sgLength song) < t
-            then return (Right (Started (fetchTrackData song' & timestamp .~ ts')), Playing song' ts')
+          in return $ if ts + fromIntegral (Y.sgLength song) < t
+            then (Right (Started (fetchTrackData song' & start .~ ts' & local .~ lt)), Playing song' ts')
             -- Otherwise, there is no candidate to send
-            else return (Left NoCandidate, s)
+            else (Left NoCandidate, s)
   case r of
     Just (Right v) -> return v
     _ -> return (Left NoCandidate, NotPlaying)
