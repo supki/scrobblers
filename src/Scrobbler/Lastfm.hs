@@ -10,7 +10,6 @@ import Control.Exception (try)
 import Control.Monad (liftM, void)
 import Data.Foldable (Foldable, toList)
 import Prelude hiding ((.), id)
-import Text.Read (readMaybe)
 
 import           Control.Lens
 import           Control.Lens.Aeson
@@ -18,12 +17,11 @@ import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import qualified Data.Aeson as A
 import           Data.ByteString.Lazy (fromStrict)
-import           Data.Time (formatTime, getCurrentTime)
+import           Data.Time.Clock.POSIX (getPOSIXTime)
 import           Network.HTTP.Conduit (HttpException(..))
 import           Network.HTTP.Types
 import qualified Network.Lastfm as L
 import qualified Network.Lastfm.Track as T
-import           System.Locale (defaultTimeLocale)
 
 import Scrobbler.Types
 
@@ -38,35 +36,31 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
 
   go' :: [Track] -> [Track] -> [Track] -> IO ([Track], [Track])
   go' tss@(t:ts) ss fs = do
-    ti <- (readMaybe . formatTime defaultTimeLocale "%s") `liftM` getCurrentTime
-    case ti of
-      -- ??? what happened ???
-      Nothing -> return (reverse ss, tss ++ reverse fs)
-      Just ti' -> do
-        r <- try . L.lastfm . L.sign s $ T.scrobble <*>
-          L.artist (t^.artist) <*> L.track (t^.title) <*> L.timestamp ti' <* L.album (t^.album) <*>
-          L.apiKey ak <*> L.sessionKey sk <* L.json
-        -- So last.fm request may fail and there is a couple of reasons for it to do so
-        case r of
-          -- We can catch some exception for http-conduit
-          Left (StatusCodeException (Status { statusCode = c }) hs _)
-            -- Status code >= 500 means server error, we hold on our judgement
-            | c >= 500 -> go' ts ss (t:fs)
-            -- Otherwise if we have response
-            | Just w <- lookup "Response" hs -> case w of
-                -- Check if it's some server error, we hold on the judgement then
-              _ | server (fromStrict w) -> go' ts ss (t:fs)
-                -- Otherwise it was a client error and we drop the track
-                | otherwise -> go' ts ss fs
-          -- Otherwise we catched some other exception that's some weird failure and we better abort
-          Left _ -> return (reverse ss, tss ++ reverse fs)
-          -- If we fail to parse JSON that's some kind of connection issue, abort everything
-          Right Nothing -> return (reverse ss, tss ++ reverse fs)
-          Right (Just v)
-            -- If we found 'ignored' field in JSON response, we can safely ignore this track
-            | dismissed v -> go' ts ss fs
-            -- Otherwise everything went fine
-            | otherwise -> go' ts (t:ss) fs
+    ti <- round <$> getPOSIXTime
+    r <- try . L.lastfm . L.sign s $ T.scrobble <*>
+      L.artist (t^.artist) <*> L.track (t^.title) <*> L.timestamp ti <* L.album (t^.album) <*>
+      L.apiKey ak <*> L.sessionKey sk <* L.json
+    -- So last.fm request may fail and there is a couple of reasons for it to do so
+    case r of
+      -- We can catch some exception for http-conduit
+      Left (StatusCodeException (Status { statusCode = c }) hs _)
+        -- Status code >= 500 means server error, we hold on our judgement
+        | c >= 500 -> go' ts ss (t:fs)
+        -- Otherwise if we have response
+        | Just w <- lookup "Response" hs -> case w of
+            -- Check if it's some server error, we hold on the judgement then
+          _ | server (fromStrict w) -> go' ts ss (t:fs)
+            -- Otherwise it was a client error and we drop the track
+            | otherwise -> go' ts ss fs
+      -- Otherwise we catched some other exception that's some weird failure and we better abort
+      Left _ -> return (reverse ss, tss ++ reverse fs)
+      -- If we fail to parse JSON that's some kind of connection issue, abort everything
+      Right Nothing -> return (reverse ss, tss ++ reverse fs)
+      Right (Just v)
+        -- If we found 'ignored' field in JSON response, we can safely ignore this track
+        | dismissed v -> go' ts ss fs
+        -- Otherwise everything went fine
+        | otherwise -> go' ts (t:ss) fs
   go' [] ss fs = return (reverse ss, reverse fs)
 
   server    = maybe False (`elem` [11, 16]) . preview (key "error" . _Number)

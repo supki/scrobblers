@@ -37,11 +37,11 @@ instance Traversable PlayerStateChange where
 
 -- | Track information
 data Track = Track
-  { _timestamp :: Int64  -- ^ playing start timestamp
-  , _title     :: Text   -- ^ title
-  , _artist    :: Text   -- ^ artist
-  , _album     :: Text   -- ^ album title (optional)
-  , _length    :: Int64  -- ^ duration
+  { _timestamp :: Int64 -- ^ playing start timestamp
+  , _title     :: Text  -- ^ title
+  , _artist    :: Text  -- ^ artist
+  , _album     :: Text  -- ^ album title (optional)
+  , _length    :: Int64 -- ^ duration
   } deriving (Show, Read, Eq, Ord)
 
 makeLenses ''Track
