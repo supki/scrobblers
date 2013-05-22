@@ -6,7 +6,11 @@ module Scrobbler.Network
 
 import Prelude hiding ((.), id)
 
+import qualified Codec.Crypto.RSA as RSA
+import           Codec.Crypto.RSA (PublicKey, PrivateKey)
+import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
+import           Crypto.Random (SystemRandom, newGenIO)
 import           Data.ByteString.Lazy (ByteString)
 -- import qualified Data.ByteString.Lazy as B
 
@@ -24,11 +28,13 @@ receive = undefined
 
 
 -- | Encrypt 'Track' with RSA
-encrypt :: Monad m => PublicKey -> Wire e m Track ByteString
-encrypt k = arr (encrypt' k) . serialize
+encrypt :: MonadIO m => PublicKey -> Wire e m Track ByteString
+encrypt k = encrypt' . serialize
  where
-  encrypt' :: PublicKey -> ByteString -> ByteString
-  encrypt' = undefined
+  encrypt' = mkStateM Nothing $ \_dt (bs, s) -> liftIO $ do
+    g <- maybe newGenIO return s
+    let (bs', g') = RSA.encrypt (g :: SystemRandom) k bs
+    return (Right bs', Just g')
 
 
 -- | Serialize 'Track' for network transmission
@@ -38,10 +44,7 @@ serialize = arr undefined
 
 -- | Encrypt 'Track' with RSA
 decrypt :: Monad m => PrivateKey -> Wire e m ByteString Track
-decrypt k = deserialize . arr (decrypt' k)
- where
-  decrypt' :: PrivateKey -> ByteString -> ByteString
-  decrypt' = undefined
+decrypt k = deserialize . arr (RSA.decrypt k)
 
 
 -- | Deserialize 'Track' after network transmission

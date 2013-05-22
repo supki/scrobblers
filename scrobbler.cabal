@@ -39,7 +39,9 @@ library
     netwire,
     bytestring,
     text,
-    time
+    time,
+    crypto-api,
+    RSA
 
 executable scrobbler
   default-language:  Haskell2010

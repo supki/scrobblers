@@ -9,7 +9,6 @@ import Data.Int (Int64)
 import Data.Monoid (mempty)
 
 import           Control.Lens
-import           Data.ByteString.Lazy (ByteString)
 import           Data.Default (Default(..))
 import           Data.Text (Text)
 import qualified Network.Lastfm as L
@@ -100,12 +99,3 @@ data Credentials = Credentials
   , sessionKey :: Text
   , secret :: L.Secret
   } deriving (Show)
-
-
--- | For encryption
-newtype PublicKey = PublicKey ByteString
-    deriving (Show, Read)
-
--- | For decryption
-newtype PrivateKey = PrivateKey ByteString
-    deriving (Show, Read)
