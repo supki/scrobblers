@@ -36,8 +36,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
   go' :: [Track] -> [Track] -> [Track] -> IO ([Track], [Track])
   go' tss@(t:ts) ss fs = do
     r <- try . L.lastfm . L.sign s $ T.scrobble <*>
-      L.artist (t^.artist) <*> L.track (t^.title) <*> L.timestamp (t^.local + t^.length) <*
-      L.album (t^.album) <*>
+      L.artist (t^.artist) <*> L.track (t^.title) <*> L.timestamp (t^.local) <* L.album (t^.album) <*>
       L.apiKey ak <*> L.sessionKey sk <* L.json
     -- So last.fm request may fail and there is a couple of reasons for it to do so
     case r of

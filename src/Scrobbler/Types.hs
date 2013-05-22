@@ -42,7 +42,7 @@ data Track = Track
   , _artist :: Text  -- ^ artist
   , _album  :: Text  -- ^ album title (optional)
   , _length :: Int64 -- ^ duration
-  , _local  :: Int64 -- ^ timestamp since epoch
+  , _local  :: Int64 -- ^ scrobble timestamp
   } deriving (Show, Read, Eq, Ord)
 
 makeLenses ''Track

@@ -24,11 +24,13 @@ contest' = mkState Stopped $ \_dt ((t, ch), tr) -> (change (Left NoScrobbles) (g
     | tr^.length < 30 = Left NoScrobbles
     -- Otherwise, if the time passed since is more than half candidate lenght it's
     -- definitely should be scrobbled
-    | t - tr^.start > tr^.length `div` 2 = Right (Scrobble tr)
+    | dt > tr^.length `div` 2 = Right . Scrobble . (local +~ dt) $ tr
     -- Otherwise, if the passed is more than 4 minutes it's should be scrobbled anyway
-    | t - tr^.start > 4 * 60 = Right (Scrobble tr)
+    | dt > 4 * 60 = Right . Scrobble . (local +~ dt) $ tr
     -- Otherwise there is nothing to scrobble
     | otherwise = Left NoScrobbles
+   where
+    dt = t - tr^.start
 
 change :: b -> (a -> b) -> PlayerStateChange a -> b
 change _ f (Started a) = f a
