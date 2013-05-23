@@ -5,9 +5,9 @@ module Scrobbler.Network
   ( -- * Networking
     send, receive
     -- * Ennetworking
-  , encrypt, serialize
+  , encrypt, encrypt', serialize
     -- * Denetworking
-  , decrypt, deserialize
+  , decrypt, decrypt', deserialize
   ) where
 
 import Prelude hiding ((.), id)
@@ -34,11 +34,14 @@ receive :: Wire e m () ByteString
 receive = undefined
 
 
--- | Encrypt 'Track' with RSA
-encrypt :: (CryptoRandomGen g, Monad m) => PublicKey -> g -> Wire e m Track ByteString
-encrypt k g = encrypt' . serialize
+-- | Encrypt 'Track' with RSA 'Wire'
+encrypt :: (CryptoRandomGen g, Monad m) => g -> PublicKey -> Wire e m Track ByteString
+encrypt g k = encrypt' g k . serialize
  where
-  encrypt' = mkState g (\_dt -> rsa k)
+
+-- | Encrypt 'ByteString' with RSA 'Wire'
+encrypt' :: (CryptoRandomGen g, Monad m) => g -> PublicKey -> Wire e m ByteString ByteString
+encrypt' g k = mkState g (\_dt -> rsa k)
 
 -- This function is separated from 'encrypt' mainly
 -- because I wanted to ensure it does not have access to
@@ -52,9 +55,13 @@ serialize :: (Serialize a, Monad m) => Wire e m a ByteString
 serialize = arr encodeLazy
 
 
--- | Encrypt 'Track' with RSA
+-- | Decrypt 'Track' with RSA 'Wire'
 decrypt :: Monad m => PrivateKey -> Wire Error m ByteString Track
-decrypt k = deserialize . arr (RSA.decrypt k)
+decrypt k = deserialize . decrypt' k
+
+-- | Decrypt 'ByteString' with RSA 'Wire'
+decrypt' :: Monad m => PrivateKey -> Wire e m ByteString ByteString
+decrypt' k = arr (RSA.decrypt k)
 
 
 -- | De'Serialize' datum after network transmission

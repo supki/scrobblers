@@ -53,9 +53,12 @@ executable scrobbler
 
 test-suite networking
   build-depends: base >= 3 && < 5,
+                 bytestring,
                  text,
                  netwire,
                  QuickCheck,
+                 crypto-api,
+                 RSA,
                  scrobbler
   type: exitcode-stdio-1.0
   hs-source-dirs: tests

@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Main where
@@ -5,16 +7,24 @@ module Main where
 import Prelude hiding ((.), id)
 import System.Exit (exitFailure)
 
-import Control.Wire
-import Data.Text (Text, pack)
-import Test.QuickCheck
+import           Codec.Crypto.RSA (PublicKey, PrivateKey, generateKeyPair)
+import           Control.Wire
+import           Crypto.Random (SystemRandom, CryptoRandomGen, newGenIO)
+import           Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString.Lazy as B
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           Test.QuickCheck
 
-import Scrobbler.Network (serialize, deserialize)
+import Scrobbler.Network
 import Scrobbler.Types
 
 
+instance Arbitrary ByteString where
+  arbitrary = B.pack <$> arbitrary
+
 instance Arbitrary Text where
-  arbitrary = pack <$> arbitrary
+  arbitrary = T.pack <$> arbitrary
 
 instance Arbitrary Track where
   arbitrary = Track
@@ -28,17 +38,19 @@ instance Arbitrary Track where
 
 main :: IO ()
 main = do
-  r <- quickCheckResult prop_serialization_is_id
-  case r of
+  qc prop_serialization_is_id >>= \case
     Failure {} -> exitFailure
     GaveUp {} -> exitFailure
     NoExpectedFailure {} -> exitFailure
     _ -> return ()
-
-
--- serialization/desialization wire
-serialization :: Monad m => Wire Error m Track Track
-serialization = deserialize . serialize
+  (k, k', g') <- flip generateKeyPair 1024 <$> newGenIO
+  qc (prop_encryption'_is_id k k' (g' :: SystemRandom)) >>= \case
+    Failure {} -> exitFailure
+    GaveUp {} -> exitFailure
+    NoExpectedFailure {} -> exitFailure
+    _ -> return ()
+ where
+  qc = quickCheckWithResult stdArgs { maxSuccess = 500 }
 
 
 prop_serialization_is_id :: Track -> Bool
@@ -47,3 +59,20 @@ prop_serialization_is_id t =
   in case et of
     Right t' -> t == t'
     _ -> False
+
+-- serialization/desialization wire
+serialization :: Monad m => Wire Error m Track Track
+serialization = deserialize . serialize
+
+
+prop_encryption'_is_id :: CryptoRandomGen g => PublicKey -> PrivateKey -> g -> ByteString -> Bool
+prop_encryption'_is_id g k k' bs =
+  let (et, _) = stepWireP (encryption' g k k') 0 bs
+  in case et of
+    Right bs' -> bs == bs'
+    _ -> False
+
+-- encryption'/decryption' wire
+encryption' :: (CryptoRandomGen g, Monad m)
+            => PublicKey -> PrivateKey -> g -> Wire Error m ByteString ByteString
+encryption' k k' g = decrypt' k' . encrypt' g k
