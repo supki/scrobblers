@@ -53,6 +53,8 @@ executable scrobbler
 
 test-suite networking
   build-depends: base >= 3 && < 5,
+                 text,
+                 netwire,
                  QuickCheck,
                  scrobbler
   type: exitcode-stdio-1.0
@@ -60,4 +62,3 @@ test-suite networking
   main-is: networking.hs
   ghc-options: -Wall
                -fno-warn-unused-do-bind
-               -fno-warn-orphans

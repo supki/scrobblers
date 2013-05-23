@@ -71,8 +71,8 @@ instance Serialize Track where
     put (tr^.local)
   get = do
     st <- get
-    Right ar <- decodeUtf8' <$> get
     Right ti <- decodeUtf8' <$> get
+    Right ar <- decodeUtf8' <$> get
     Right al <- decodeUtf8' <$> get
     le <- get
     lo <- get
