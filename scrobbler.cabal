@@ -50,3 +50,14 @@ executable scrobbler
   build-depends:
     base >= 4 && < 5,
     scrobbler
+
+test-suite networking
+  build-depends: base >= 3 && < 5,
+                 QuickCheck,
+                 scrobbler
+  type: exitcode-stdio-1.0
+  hs-source-dirs: tests
+  main-is: networking.hs
+  ghc-options: -Wall
+               -fno-warn-unused-do-bind
+               -fno-warn-orphans
