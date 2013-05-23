@@ -19,8 +19,10 @@ import qualified Network.Lastfm as L
 
 -- | Change in 'Player' state
 --
+--
+--
 -- We need it because we want to capture pausing/stopping
--- the player as well as chaning tracks
+-- the player as well as chaining tracks
 data PlayerStateChange a = Started a | Stopped
     deriving (Show, Read)
 
@@ -39,7 +41,7 @@ instance Traversable PlayerStateChange where
 
 -- | Track information
 data Track = Track
-  { _start  :: Int64 -- ^ timestamp since scrobbler start
+  { _start  :: Int64 -- ^ track start relative to scrobbler start time
   , _title  :: Text  -- ^ title
   , _artist :: Text  -- ^ artist
   , _album  :: Text  -- ^ album title (optional)
@@ -47,7 +49,7 @@ data Track = Track
   , _local  :: Int64 -- ^ scrobble timestamp
   } deriving (Show, Read, Eq, Ord)
 
-makeLenses ''Track
+makeLensesWith ?? ''Track $ defaultRules & generateSignatures .~ False
 
 instance Default Track where
   def = Track
@@ -81,6 +83,24 @@ instance Serialize Track where
       & album .~ al
       & length .~ le
       & local .~ lo
+
+-- | Lens to track start time
+start :: Lens' Track Int64
+
+-- | Lens to track title
+title :: Lens' Track Text
+
+-- | Lens to track artist
+artist :: Lens' Track Text
+
+-- | Lens to track album
+album :: Lens' Track Text
+
+-- | Lens to track length
+length :: Lens' Track Int64
+
+-- | Lens to track scrobble timestamp
+local :: Lens' Track Int64
 
 
 -- | Successful scrobbles

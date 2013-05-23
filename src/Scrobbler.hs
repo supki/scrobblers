@@ -1,3 +1,6 @@
+-- | Lastfm scrobbler
+--
+-- Based on @liblastfm@ and @netwire@ (and other twenty packages)
 module Scrobbler
   ( module Scrobbler.Algorithm
   , module Scrobbler.Announce

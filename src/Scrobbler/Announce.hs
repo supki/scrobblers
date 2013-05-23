@@ -1,6 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
--- | Log information about scrobbling process
+-- | Announce things happening in scrobbling process
 module Scrobbler.Announce
   ( Announce(..)
   , pprint
@@ -38,11 +38,11 @@ instance Announce a => Announce (Successes a) where
   message (Successes ps) = intercalate "\n" ("* Successfully scrobbled:" : fmap message ps)
 
 
--- | Announce in 'IO'
+-- | 'Announce' in 'IO'
 pprint :: (MonadIO m, Announce a) => a -> m ()
 pprint = liftIO . putStrLn . message
 
 
--- | Announcement 'Wire'
+-- | 'Announce'ment 'Wire'. Propagates input
 announce :: (MonadIO m, Announce a) => Wire e m a a
 announce = mkFixM $ \_dt p -> pprint p >> return (Right p)
