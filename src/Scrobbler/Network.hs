@@ -1,3 +1,6 @@
+-- | Scrobbler networking. Connects different scrobblers in chain
+--
+-- Supports optional encryption
 module Scrobbler.Network
   ( -- * Networking
     send, receive
@@ -11,9 +14,9 @@ import Prelude hiding ((.), id)
 
 import qualified Codec.Crypto.RSA as RSA
 import           Codec.Crypto.RSA (PublicKey, PrivateKey)
-import           Control.Monad.Trans (MonadIO, liftIO)
+import           Control.Lens
 import           Control.Wire
-import           Crypto.Random (SystemRandom, newGenIO)
+import           Crypto.Random (CryptoRandomGen)
 import           Data.ByteString.Lazy (ByteString)
 import           Data.Serialize (Serialize, decodeLazy, encodeLazy)
 -- import qualified Data.ByteString.Lazy as B
@@ -32,13 +35,16 @@ receive = undefined
 
 
 -- | Encrypt 'Track' with RSA
-encrypt :: MonadIO m => PublicKey -> Wire e m Track ByteString
-encrypt k = encrypt' . serialize
+encrypt :: (CryptoRandomGen g, Monad m) => PublicKey -> g -> Wire e m Track ByteString
+encrypt k g = encrypt' . serialize
  where
-  encrypt' = mkStateM Nothing $ \_dt (bs, s) -> liftIO $ do
-    g <- maybe newGenIO return s
-    let (bs', g') = RSA.encrypt (g :: SystemRandom) k bs
-    return (Right bs', Just g')
+  encrypt' = mkState g (\_dt -> rsa k)
+
+-- This function is separated from 'encrypt' mainly
+-- because I wanted to ensure it does not have access to
+-- initial random gen and therefore can not by mistake reuse it
+rsa :: CryptoRandomGen g => PublicKey -> (ByteString, g) -> (Either e ByteString, g)
+rsa k (bs, s) = RSA.encrypt s k bs & _1 %~ Right
 
 
 -- | 'Serialize' datum for network transmission
