@@ -51,7 +51,7 @@ executable scrobbler
     base >= 4 && < 5,
     scrobbler
 
-test-suite networking
+test-suite bytestringing
   build-depends: base >= 3 && < 5,
                  bytestring,
                  text,
@@ -62,6 +62,6 @@ test-suite networking
                  scrobbler
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
-  main-is: networking.hs
+  main-is: bytestringing.hs
   ghc-options: -Wall
                -fno-warn-unused-do-bind
