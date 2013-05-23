@@ -38,13 +38,22 @@ instance Arbitrary Track where
 
 main :: IO ()
 main = do
+  -- Serialization
   qc prop_serialization_is_id >>= \case
     Failure {} -> exitFailure
     GaveUp {} -> exitFailure
     NoExpectedFailure {} -> exitFailure
     _ -> return ()
-  (k, k', g') <- flip generateKeyPair 1024 <$> newGenIO
-  qc (prop_encryption'_is_id k k' (g' :: SystemRandom)) >>= \case
+  -- Encryption
+  (k, k', g) <- flip generateKeyPair 1024 <$> newGenIO
+  qc (prop_encryption'_is_id k k' (g :: SystemRandom)) >>= \case
+    Failure {} -> exitFailure
+    GaveUp {} -> exitFailure
+    NoExpectedFailure {} -> exitFailure
+    _ -> return ()
+  -- Serialization + encryption
+  (k'', k''', g') <- flip generateKeyPair 1024 <$> newGenIO
+  qc (prop_encryption_is_id k'' k''' (g' :: SystemRandom)) >>= \case
     Failure {} -> exitFailure
     GaveUp {} -> exitFailure
     NoExpectedFailure {} -> exitFailure
@@ -76,3 +85,16 @@ prop_encryption'_is_id g k k' bs =
 encryption' :: (CryptoRandomGen g, Monad m)
             => PublicKey -> PrivateKey -> g -> Wire Error m ByteString ByteString
 encryption' k k' g = decrypt' k' . encrypt' g k
+
+
+prop_encryption_is_id :: CryptoRandomGen g => PublicKey -> PrivateKey -> g -> ByteString -> Bool
+prop_encryption_is_id g k k' bs =
+  let (et, _) = stepWireP (encryption' g k k') 0 bs
+  in case et of
+    Right bs' -> bs == bs'
+    _ -> False
+
+-- encryption'/decryption' wire
+encryption :: (CryptoRandomGen g, Monad m)
+            => PublicKey -> PrivateKey -> g -> Wire Error m Track Track
+encryption k k' g = decrypt k' . encrypt g k
