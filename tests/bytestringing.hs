@@ -16,8 +16,8 @@ import           Data.Text (Text)
 import qualified Data.Text as T
 import           Test.QuickCheck
 
-import Scrobbler.Network
-import Scrobbler.Types
+import Control.Scrobbler.Network
+import Control.Scrobbler.Types
 
 
 instance Arbitrary ByteString where
