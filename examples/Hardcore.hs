@@ -4,11 +4,7 @@ import Control.Category
 import Control.Concurrent (forkIO)
 import Prelude hiding ((.), id)
 
-import qualified Codec.Crypto.RSA as RSA
-import           Codec.Crypto.RSA (PublicKey, PrivateKey)
-import           Crypto.Random (CryptoRandomGen, SystemRandom, newGenIO)
-import           Data.Profunctor (lmap, rmap)
-import           Network
+import Network
 
 import Control.Scrobbler
 import Control.Scrobbler.Algorithm.MPD
@@ -16,26 +12,25 @@ import Control.Scrobbler.Algorithm.MPD
 
 main :: IO ()
 main = do
-  g <- newGenIO
-  let (k, k', g') = RSA.generateKeyPair g 1024
-  doWork k k' (g' :: SystemRandom)
-
-
-doWork :: CryptoRandomGen g => PublicKey -> PrivateKey -> g -> IO ()
-doWork k k' g = do
-  forkIO worker
-  scrobbler $
-    send "localhost" (PortNumber 4774) . lmap unScrobble (encrypt g k) . announce . contest .
-    announce . updateNowPlaying credentials . candidate
+  forkIO sender
+  forkIO receiver
+  worker
  where
-  worker = scrobbler $
-    announce . scrobble credentials . rmap Scrobble (decrypt k') . receive (PortNumber 4774)
+  receiver = scrobbler $
+    announce . fmap (Successes :: [Track] -> Successes Track) deserialize . receive (PortNumber 7447)
+  sender = scrobbler $
+    send "localhost" (PortNumber 4774) . serialize . candidate
 
 
-credentials :: Credentials
-credentials = Credentials
-  { apiKey     = "__YOUR_API_KEY__"
-  , sessionKey = "__YOUR_SESSION_KEY__"
-  , secret     = "__YOUR_SECRET__"
-  }
-
+worker :: IO ()
+worker = scrobbler $
+  send "localhost" (PortNumber 7447) .
+  serialize . scrobble cs . announce . contest . announce . updateNowPlaying cs . deserialize .
+  receive (PortNumber 4774)
+ where
+  cs :: Credentials
+  cs = Credentials
+    { apiKey     = "__YOUR_API_KEY__"
+    , sessionKey = "__YOUR_SESSION_KEY__"
+    , secret     = "__YOUR_SECRET__"
+    }

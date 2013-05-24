@@ -23,8 +23,5 @@ executable hardcore
   main-is:           Hardcore.hs
   build-depends:
     base >= 4 && < 5,
-    profunctors,
     network,
-    crypto-api,
-    RSA,
     scrobblers
