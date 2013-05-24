@@ -55,7 +55,7 @@ receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
 
 
 -- | Encrypt 'Track' with RSA 'Wire'
-encrypt :: (CryptoRandomGen g, Monad m) => g -> PublicKey -> Wire e m Track ByteString
+encrypt :: (CryptoRandomGen g, Serialize b, Monad m) => g -> PublicKey -> Wire e m b ByteString
 encrypt g k = encrypt' g k . serialize
 
 -- | Encrypt 'ByteString' with RSA 'Wire'
@@ -70,7 +70,7 @@ rsa k (bs, s) = RSA.encrypt s k bs & _1 %~ Right
 
 
 -- | Decrypt 'Track' with RSA 'Wire'
-decrypt :: Monad m => PrivateKey -> Wire Error m ByteString Track
+decrypt :: (Serialize b, Monad m) => PrivateKey -> Wire Error m ByteString b
 decrypt k = deserialize . decrypt' k
 
 -- | Decrypt 'ByteString' with RSA 'Wire'
