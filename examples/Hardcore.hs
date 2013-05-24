@@ -24,16 +24,14 @@ doWork k iv = do
   forkIO receiver
   worker
  where
-  receiver = scrobbler $
-    announce . fmap (Successes :: [Track] -> Successes Track) (decrypt k iv) . receive (PortNumber 7447)
+  receiver = announcer $
+    decrypt k iv . receive (PortNumber 7447)
   sender = scrobbler $
     send "localhost" (PortNumber 4774) . encrypt k iv . candidate
 
   worker :: IO ()
-  worker = scrobbler $
-    send "localhost" (PortNumber 7447) .
-    encrypt k iv . scrobble cs . announce . contest . announce . updateNowPlaying cs . decrypt k iv .
-    receive (PortNumber 4774)
+  worker = PortNumber 4774 ==> ("localhost", PortNumber 7447) $
+    encrypt k iv . scrobble cs . announce . contest . announce . updateNowPlaying cs . decrypt k iv
    where
     cs :: Credentials
     cs = Credentials
