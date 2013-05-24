@@ -42,8 +42,7 @@ library
     time,
     network,
     cereal,
-    crypto-api,
-    RSA
+    cipher-aes
 
 test-suite bytestringing
   default-language:  Haskell2010
@@ -53,8 +52,7 @@ test-suite bytestringing
     text,
     netwire,
     QuickCheck,
-    crypto-api,
-    RSA,
+    cipher-aes,
     scrobblers
   type: exitcode-stdio-1.0
   hs-source-dirs: tests

@@ -14,16 +14,13 @@ import Control.Monad (mplus)
 import Prelude hiding ((.), id)
 import System.Timeout (timeout)
 
-import qualified Codec.Crypto.RSA as RSA
-import           Codec.Crypto.RSA (PublicKey, PrivateKey)
-import           Control.Lens
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
-import           Crypto.Random (CryptoRandomGen)
-import           Data.ByteString.Lazy (ByteString)
-import           Data.Serialize (Serialize, decodeLazy, encodeLazy)
+import qualified Crypto.Cipher.AES as AES
+import           Data.ByteString (ByteString)
+import           Data.Serialize (Serialize, decode, encode)
 import           Network
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
 
 import Control.Scrobbler.Types
 
@@ -55,34 +52,28 @@ receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
 
 
 -- | Encrypt 'Track' with RSA 'Wire'
-encrypt :: (CryptoRandomGen g, Serialize b, Monad m) => g -> PublicKey -> Wire e m b ByteString
-encrypt g k = encrypt' g k . serialize
+encrypt :: (Serialize b, Monad m) => AES.Key -> AES.IV -> Wire e m b ByteString
+encrypt k iv = encrypt' k iv . serialize
 
 -- | Encrypt 'ByteString' with RSA 'Wire'
-encrypt' :: (CryptoRandomGen g, Monad m) => g -> PublicKey -> Wire e m ByteString ByteString
-encrypt' g k = mkState g (\_dt -> rsa k)
-
--- This function is separated from 'encrypt' mainly
--- because I wanted to ensure it does not have access to
--- initial random gen and therefore can not by mistake reuse it
-rsa :: CryptoRandomGen g => PublicKey -> (ByteString, g) -> (Either e ByteString, g)
-rsa k (bs, s) = RSA.encrypt s k bs & _1 %~ Right
+encrypt' :: Monad m => AES.Key -> AES.IV -> Wire e m ByteString ByteString
+encrypt' k iv = arr (AES.encryptCTR k iv)
 
 
 -- | Decrypt 'Track' with RSA 'Wire'
-decrypt :: (Serialize b, Monad m) => PrivateKey -> Wire Error m ByteString b
-decrypt k = deserialize . decrypt' k
+decrypt :: (Serialize b, Monad m) => AES.Key -> AES.IV -> Wire Error m ByteString b
+decrypt k iv = deserialize . decrypt' k iv
 
 -- | Decrypt 'ByteString' with RSA 'Wire'
-decrypt' :: Monad m => PrivateKey -> Wire e m ByteString ByteString
-decrypt' = arr . RSA.decrypt
+decrypt' :: Monad m => AES.Key -> AES.IV -> Wire e m ByteString ByteString
+decrypt' k iv = arr (AES.decryptCTR k iv)
 
 
 -- | 'Serialize' datum for network transmission
 serialize :: (Serialize a, Monad m) => Wire e m a ByteString
-serialize = arr encodeLazy
+serialize = arr encode
 
 
 -- | De'Serialize' datum after network transmission
 deserialize :: (Serialize b, Monad m) => Wire Error m ByteString b
-deserialize = mkFix $ \_dt -> left NoDecoding . decodeLazy
+deserialize = mkFix $ \_dt -> left NoDecoding . decode

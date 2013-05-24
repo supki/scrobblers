@@ -24,4 +24,5 @@ executable hardcore
   build-depends:
     base >= 4 && < 5,
     network,
+    cipher-aes,
     scrobblers

@@ -7,11 +7,10 @@ module Main where
 import Prelude hiding ((.), id)
 import System.Exit (exitFailure)
 
-import           Codec.Crypto.RSA (PublicKey, PrivateKey, generateKeyPair)
 import           Control.Wire
-import           Crypto.Random (SystemRandom, CryptoRandomGen, newGenIO)
-import           Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy as B
+import           Crypto.Cipher.AES
+import           Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import           Data.Text (Text)
 import qualified Data.Text as T
 import           Test.QuickCheck
@@ -45,15 +44,15 @@ main = do
     NoExpectedFailure {} -> exitFailure
     _ -> return ()
   -- Encryption
-  (k, k', g) <- flip generateKeyPair 1024 <$> newGenIO
-  qc (prop_encryption'_is_id k k' (g :: SystemRandom)) >>= \case
+  let k = initKey "0123456789ABCDEF"
+      iv = IV "FEDCBA9876543210"
+  qc (prop_encryption'_is_id k iv) >>= \case
     Failure {} -> exitFailure
     GaveUp {} -> exitFailure
     NoExpectedFailure {} -> exitFailure
     _ -> return ()
   -- Serialization + encryption
-  (k'', k''', g') <- flip generateKeyPair 1024 <$> newGenIO
-  qc (prop_encryption_is_id k'' k''' (g' :: SystemRandom)) >>= \case
+  qc (prop_encryption_is_id k iv) >>= \case
     Failure {} -> exitFailure
     GaveUp {} -> exitFailure
     NoExpectedFailure {} -> exitFailure
@@ -74,27 +73,25 @@ serialization :: Monad m => Wire Error m Track Track
 serialization = deserialize . serialize
 
 
-prop_encryption'_is_id :: CryptoRandomGen g => PublicKey -> PrivateKey -> g -> ByteString -> Bool
-prop_encryption'_is_id g k k' bs =
-  let (et, _) = stepWireP (encryption' g k k') 0 bs
+prop_encryption'_is_id :: Key -> IV -> ByteString -> Bool
+prop_encryption'_is_id k iv bs =
+  let (et, _) = stepWireP (encryption' k iv) 0 bs
   in case et of
     Right bs' -> bs == bs'
     _ -> False
 
 -- encryption'/decryption' wire
-encryption' :: (CryptoRandomGen g, Monad m)
-            => PublicKey -> PrivateKey -> g -> Wire Error m ByteString ByteString
-encryption' k k' g = decrypt' k' . encrypt' g k
+encryption' :: Monad m => Key -> IV -> Wire Error m ByteString ByteString
+encryption' k iv = decrypt' k iv . encrypt' k iv
 
 
-prop_encryption_is_id :: CryptoRandomGen g => PublicKey -> PrivateKey -> g -> ByteString -> Bool
-prop_encryption_is_id g k k' bs =
-  let (et, _) = stepWireP (encryption' g k k') 0 bs
+prop_encryption_is_id :: Key -> IV -> ByteString -> Bool
+prop_encryption_is_id k iv bs =
+  let (et, _) = stepWireP (encryption' k iv) 0 bs
   in case et of
     Right bs' -> bs == bs'
     _ -> False
 
 -- encryption'/decryption' wire
-encryption :: (CryptoRandomGen g, Monad m)
-            => PublicKey -> PrivateKey -> g -> Wire Error m Track Track
-encryption k k' g = decrypt k' . encrypt g k
+encryption :: Monad m => Key -> IV -> Wire Error m Track Track
+encryption k iv = decrypt k iv . encrypt k iv
