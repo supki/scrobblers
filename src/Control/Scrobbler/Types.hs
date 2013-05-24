@@ -11,7 +11,7 @@ import Prelude hiding (length)
 
 import           Control.Lens
 import           Data.Default (Default(..))
-import           Data.Serialize (Serialize(..))
+import           Data.Serialize (Serialize(..), getWord8, putWord8)
 import           Data.Text (Text)
 import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
 import qualified Network.Lastfm as L
@@ -37,6 +37,15 @@ instance Foldable PlayerStateChange where
 instance Traversable PlayerStateChange where
   traverse f (Started a) = Started <$> f a
   traverse _     Stopped = pure Stopped
+
+instance Serialize a => Serialize (PlayerStateChange a) where
+  put (Started a) = putWord8 1 >> put a
+  put     Stopped = putWord8 0
+  get = do
+    tag <- getWord8
+    case tag of
+      0 -> return Stopped
+      _ -> Started <$> get
 
 
 -- | Track information
@@ -116,6 +125,10 @@ instance Foldable Successes where
 instance Traversable Successes where
   traverse f (Successes a) = Successes <$> traverse f a
 
+instance Serialize a => Serialize (Successes a) where
+  put (Successes a) = put a
+  get = Successes <$> get
+
 
 -- | What to scrobble
 newtype Scrobble a = Scrobble { unScrobble :: a }
@@ -129,6 +142,10 @@ instance Foldable Scrobble where
 
 instance Traversable Scrobble where
   traverse f (Scrobble a) = Scrobble <$> f a
+
+instance Serialize a => Serialize (Scrobble a) where
+  put (Scrobble a) = put a
+  get = Scrobble <$> get
 
 
 -- | Scrobbler errors
