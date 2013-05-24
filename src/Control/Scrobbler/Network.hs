@@ -12,6 +12,7 @@ module Control.Scrobbler.Network
 
 import Control.Monad (mplus)
 import Prelude hiding ((.), id)
+import System.Timeout (timeout)
 
 import qualified Codec.Crypto.RSA as RSA
 import           Codec.Crypto.RSA (PublicKey, PrivateKey)
@@ -42,10 +43,13 @@ send hn pid = mkFixM $ \_dt bs -> liftIO $ do
 receive :: MonadIO m => PortID -> Wire Error m () ByteString
 receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
   s <- maybe (listenOn pid) return ms
-  (h, _, _) <- accept s
-  [n] <- B.unpack <$> B.hGet h 1
-  bs <- B.hGet h (fromIntegral n)
-  return (Right bs, Just s)
+  r <- timeout 1000000 (accept s)
+  case r of
+    Just (h, _, _) -> do
+      [n] <- B.unpack <$> B.hGet h 1
+      bs <- B.hGet h (fromIntegral n)
+      return (Right bs, Just s)
+    Nothing -> return (Left NoReceive, Just s)
  `mplus`
   return (Left NoReceive, Nothing)
 
