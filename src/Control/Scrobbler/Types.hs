@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 -- | Various types used in scrobbler
-module Scrobbler.Types where
+module Control.Scrobbler.Types where
 
 import Control.Applicative (Applicative(..), (<$>))
 import Data.Foldable (Foldable(..))
@@ -104,7 +104,7 @@ local :: Lens' Track Int64
 
 
 -- | Successful scrobbles
-newtype Successes a = Successes [a]
+newtype Successes a = Successes { unSuccesses :: [a] }
     deriving (Show, Read)
 
 instance Functor Successes where
@@ -118,7 +118,7 @@ instance Traversable Successes where
 
 
 -- | What to scrobble
-newtype Scrobble a = Scrobble a
+newtype Scrobble a = Scrobble { unScrobble :: a }
     deriving (Show, Read)
 
 instance Functor Scrobble where
@@ -135,8 +135,9 @@ instance Traversable Scrobble where
 data Error
   = NoCandidate
   | NoScrobbles
-  | FailedScrobble
   | NoDecoding String
+  | NoSend
+  | NoReceive
     deriving (Show, Read, Eq, Ord)
 
 

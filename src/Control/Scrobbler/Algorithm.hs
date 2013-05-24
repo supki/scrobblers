@@ -1,5 +1,5 @@
 -- | Common scrobbling algorithm routines
-module Scrobbler.Algorithm (contest, time') where
+module Control.Scrobbler.Algorithm (contest, time') where
 
 import Data.Int (Int64)
 import Prelude hiding ((.), id, length)
@@ -7,7 +7,7 @@ import Prelude hiding ((.), id, length)
 import           Control.Lens
 import           Control.Wire
 
-import Scrobbler.Types
+import Control.Scrobbler.Types
 
 
 -- | Check if candidate is ready to be scrobbled

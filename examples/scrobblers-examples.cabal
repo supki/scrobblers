@@ -1,0 +1,30 @@
+name:                scrobblers-examples
+version:             0.1.0.0
+synopsis:            Various scrobblers
+description:
+  Lastfm scrobblers making library examples
+license:             BSD3
+license-file:        LICENSE
+author:              Matvey Aksenov
+maintainer:          matvey.aksenov@gmail.com
+category:            Web
+build-type:          Simple
+cabal-version:       >= 1.10
+
+executable casual
+  default-language:  Haskell2010
+  main-is:           Casual.hs
+  build-depends:
+    base >= 4 && < 5,
+    scrobblers
+
+executable hardcore
+  default-language:  Haskell2010
+  main-is:           Hardcore.hs
+  build-depends:
+    base >= 4 && < 5,
+    profunctors,
+    network,
+    crypto-api,
+    RSA,
+    scrobblers

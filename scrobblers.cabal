@@ -1,8 +1,8 @@
-name:                scrobbler
+name:                scrobblers
 version:             0.1.0.0
-synopsis:            Lastfm scrobbler
+synopsis:            Lastfm scrobblers
 description:
-  Lastfm scrobbler
+  Lastfm scrobblers making library
   .
   Based on @liblastfm@ and @netwire@ (and other twenty packages)
 license:             BSD3
@@ -16,14 +16,14 @@ cabal-version:       >= 1.10
 library
   default-language:  Haskell2010
   hs-source-dirs:    src
-  exposed-modules:   Scrobbler
-                     Scrobbler.Main
-                     Scrobbler.Algorithm
-                     Scrobbler.Algorithm.MPD
-                     Scrobbler.Lastfm
-                     Scrobbler.Network
-                     Scrobbler.Announce
-                     Scrobbler.Types
+  exposed-modules:   Control.Scrobbler
+                     Control.Scrobbler.Main
+                     Control.Scrobbler.Algorithm
+                     Control.Scrobbler.Algorithm.MPD
+                     Control.Scrobbler.Lastfm
+                     Control.Scrobbler.Network
+                     Control.Scrobbler.Announce
+                     Control.Scrobbler.Types
   build-depends:
     base >= 4 && < 5,
     containers,
@@ -40,26 +40,21 @@ library
     bytestring,
     text,
     time,
+    network,
     cereal,
     crypto-api,
     RSA
 
-executable scrobbler
-  default-language:  Haskell2010
-  main-is:           src/Main.hs
-  build-depends:
-    base >= 4 && < 5,
-    scrobbler
-
 test-suite bytestringing
-  build-depends: base >= 3 && < 5,
-                 bytestring,
-                 text,
-                 netwire,
-                 QuickCheck,
-                 crypto-api,
-                 RSA,
-                 scrobbler
+  build-depends:
+    base >= 3 && < 5,
+    bytestring,
+    text,
+    netwire,
+    QuickCheck,
+    crypto-api,
+    RSA,
+    scrobbler
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
   main-is: bytestringing.hs

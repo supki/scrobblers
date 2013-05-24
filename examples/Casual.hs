@@ -3,8 +3,16 @@
 import Control.Category
 import Prelude hiding ((.), id)
 
-import Scrobbler
-import Scrobbler.Algorithm.MPD
+import Control.Scrobbler
+import Control.Scrobbler.Algorithm.MPD
+
+
+main :: IO ()
+main = scrobbler $
+  announce . scrobble credentials .
+  announce . contest .
+  announce . updateNowPlaying credentials .
+  candidate
 
 
 credentials :: Credentials
@@ -14,9 +22,3 @@ credentials = Credentials
   , secret     = "__YOUR_SECRET__"
   }
 
-main :: IO ()
-main = scrobbler $
-  announce . scrobble credentials .
-  announce . contest .
-  announce . updateNowPlaying credentials .
-  candidate

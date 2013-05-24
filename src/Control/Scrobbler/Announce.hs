@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 -- | Announce things happening in scrobbling process
-module Scrobbler.Announce
+module Control.Scrobbler.Announce
   ( Announce(..)
   , pprint
   , announce
@@ -15,7 +15,7 @@ import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import qualified Data.Text as T
 
-import Scrobbler.Types
+import Control.Scrobbler.Types
 
 
 -- | Class of things that can be announced, like

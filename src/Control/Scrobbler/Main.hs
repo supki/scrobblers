@@ -1,5 +1,5 @@
 -- | Main application loop is defined here
-module Scrobbler.Main
+module Control.Scrobbler.Main
   ( scrobbler
   ) where
 
@@ -11,7 +11,7 @@ import Prelude hiding ((.), id)
 
 import Control.Wire hiding (loop)
 
-import Scrobbler.Types (Error)
+import Control.Scrobbler.Types (Error)
 
 
 -- | Application loop

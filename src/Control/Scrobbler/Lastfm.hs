@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 -- | Lastfm interaction
-module Scrobbler.Lastfm
+module Control.Scrobbler.Lastfm
   ( updateNowPlaying
   , scrobble
   ) where
@@ -22,7 +22,7 @@ import           Network.HTTP.Types
 import qualified Network.Lastfm as L
 import qualified Network.Lastfm.Track as T
 
-import Scrobbler.Types
+import Control.Scrobbler.Types
 
 
 -- | Scrobble track

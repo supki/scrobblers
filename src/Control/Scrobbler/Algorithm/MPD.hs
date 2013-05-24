@@ -1,5 +1,5 @@
 -- | Scrobbling algorithm for MPD
-module Scrobbler.Algorithm.MPD
+module Control.Scrobbler.Algorithm.MPD
   ( candidate
   ) where
 
@@ -16,8 +16,8 @@ import           Data.Text (Text)
 import           Data.Time.Clock.POSIX (getPOSIXTime)
 import qualified Network.MPD as Y
 
-import Scrobbler.Algorithm
-import Scrobbler.Types
+import Control.Scrobbler.Algorithm
+import Control.Scrobbler.Types
 
 
 -- | MPD state

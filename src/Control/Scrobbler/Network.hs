@@ -1,7 +1,7 @@
 -- | Scrobbler networking. Connects different scrobblers in chain
 --
 -- Supports optional encryption
-module Scrobbler.Network
+module Control.Scrobbler.Network
   ( -- * Networking
     send, receive
     -- * Ennetworking
@@ -10,34 +10,49 @@ module Scrobbler.Network
   , decrypt, decrypt', deserialize
   ) where
 
+import Control.Monad (mplus)
 import Prelude hiding ((.), id)
 
 import qualified Codec.Crypto.RSA as RSA
 import           Codec.Crypto.RSA (PublicKey, PrivateKey)
 import           Control.Lens
+import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import           Crypto.Random (CryptoRandomGen)
 import           Data.ByteString.Lazy (ByteString)
 import           Data.Serialize (Serialize, decodeLazy, encodeLazy)
--- import qualified Data.ByteString.Lazy as B
+import           Network
+import qualified Data.ByteString.Lazy as B
 
-import Scrobbler.Types
+import Control.Scrobbler.Types
 
 
--- | Send 'Track' over the wire
-send :: Wire e m ByteString ()
-send = undefined
+-- | Send serialized 'Track' over the wire
+send :: MonadIO m => HostName -> PortID -> Wire Error m ByteString ()
+send hn pid = mkFixM $ \_dt bs -> liftIO $ do
+  h <- connectTo hn pid
+  B.hPut h (B.singleton (fromIntegral (B.length bs)))
+  B.hPut h bs
+  return (Right ())
+ `mplus`
+  return (Left NoSend)
 
 
 -- | Receive 'Track' over the wire
-receive :: Wire e m () ByteString
-receive = undefined
+receive :: MonadIO m => PortID -> Wire Error m () ByteString
+receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
+  s <- maybe (listenOn pid) return ms
+  (h, _, _) <- accept s
+  [n] <- B.unpack <$> B.hGet h 1
+  bs <- B.hGet h (fromIntegral n)
+  return (Right bs, Just s)
+ `mplus`
+  return (Left NoReceive, Nothing)
 
 
 -- | Encrypt 'Track' with RSA 'Wire'
 encrypt :: (CryptoRandomGen g, Monad m) => g -> PublicKey -> Wire e m Track ByteString
 encrypt g k = encrypt' g k . serialize
- where
 
 -- | Encrypt 'ByteString' with RSA 'Wire'
 encrypt' :: (CryptoRandomGen g, Monad m) => g -> PublicKey -> Wire e m ByteString ByteString
@@ -50,18 +65,18 @@ rsa :: CryptoRandomGen g => PublicKey -> (ByteString, g) -> (Either e ByteString
 rsa k (bs, s) = RSA.encrypt s k bs & _1 %~ Right
 
 
--- | 'Serialize' datum for network transmission
-serialize :: (Serialize a, Monad m) => Wire e m a ByteString
-serialize = arr encodeLazy
-
-
 -- | Decrypt 'Track' with RSA 'Wire'
 decrypt :: Monad m => PrivateKey -> Wire Error m ByteString Track
 decrypt k = deserialize . decrypt' k
 
 -- | Decrypt 'ByteString' with RSA 'Wire'
 decrypt' :: Monad m => PrivateKey -> Wire e m ByteString ByteString
-decrypt' k = arr (RSA.decrypt k)
+decrypt' = arr . RSA.decrypt
+
+
+-- | 'Serialize' datum for network transmission
+serialize :: (Serialize a, Monad m) => Wire e m a ByteString
+serialize = arr encodeLazy
 
 
 -- | De'Serialize' datum after network transmission
