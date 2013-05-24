@@ -8,7 +8,6 @@ module Control.Scrobbler.Lastfm
 
 import Control.Exception (try)
 import Control.Monad (liftM, void)
-import Data.Foldable (Foldable, toList)
 import Prelude hiding ((.), id, length)
 
 import           Control.Lens
@@ -26,11 +25,11 @@ import Control.Scrobbler.Types
 
 
 -- | Scrobble track
-scrobble :: (Foldable f, MonadIO m) => Credentials -> Wire Error m (f Track) (Successes Track)
+scrobble :: MonadIO m => Credentials -> Wire Error m (Scrobble Track) (Successes Track)
 scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] $ \_dt -> liftIO . go
  where
-  go (ft, ts) = do
-    (ss, fs) <- go' (toList ft ++ ts) [] []
+  go (Scrobble ft, ts) = do
+    (ss, fs) <- go' (ft:ts) [] []
     return (foldr (\_ _ -> Right (Successes ss)) (Left NoScrobbles) ss, fs)
 
   go' :: [Track] -> [Track] -> [Track] -> IO ([Track], [Track])
