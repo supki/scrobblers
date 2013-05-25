@@ -22,7 +22,7 @@ main = scrobbler $
   candidate
 
 
--- Lastfm credentials. Easy to get with 'liblastfm'
+-- Lastfm credentials. Easy to get with "liblastfm"
 credentials :: Credentials
 credentials = Credentials
   { apiKey     = "__YOUR_API_KEY__"
