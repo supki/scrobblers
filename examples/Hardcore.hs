@@ -4,7 +4,10 @@ import Control.Category
 import Control.Concurrent (forkIO)
 import Prelude hiding ((.), id)
 
-import Crypto.Cipher.AES
+import Crypto.Cipher.AES128
+import Crypto.Classes (buildKeyIO)
+import Crypto.Modes (getIVIO)
+import Crypto.Types (IV)
 import Network
 
 import Control.Scrobbler
@@ -16,21 +19,24 @@ import Control.Scrobbler.Algorithm.MPD
 main :: IO ()
 main = do
   -- AES stuff
-  let k = initKey "0123456789ABCDEF" -- encryption key
-      iv = IV "FEDCBA9876543210" -- initialization vector
+  k  <- buildKeyIO -- encryption key
+  iv <- getIVIO -- initialization vector
+  -- we need too because that's two way communication and using
+  -- the same IV twice is unsafe
+  iv' <- getIVIO
   -- Scrobbling
-  doWork k iv
+  doWork k iv iv'
 
 
-doWork :: Key -> IV -> IO ()
-doWork k iv = do
+doWork :: AESKey -> IV AESKey -> IV AESKey -> IO ()
+doWork k iv iv' = do
   forkIO sender
   forkIO receiver
   worker
  where
   -- Receives succesfull scrobbles and announces them in stdout
   receiver = announcer $
-    decrypt k iv . receive (PortNumber 7447)
+    decrypt k iv' . receive (PortNumber 7447)
   -- Gets candidates from player (MPD in that case) and sends
   -- them encrypted through network to worker
   sender = scrobbler $
@@ -39,7 +45,7 @@ doWork k iv = do
   -- Worker connects sender and receiver
   worker = PortNumber 4774 ==> ("localhost", PortNumber 7447) $
     -- and also does all hard work (see Casual.hs if anything is unclear here)
-    encrypt k iv . scrobble cs . announce . contest . announce . updateNowPlaying cs . decrypt k iv
+    encrypt k iv' . scrobble cs . announce . contest . announce . updateNowPlaying cs . decrypt k iv
    where
     -- Lastfm credentials. Easy to get with 'liblastfm'
     cs :: Credentials

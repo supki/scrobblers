@@ -8,7 +8,10 @@ import Prelude hiding ((.), id)
 import System.Exit (exitFailure)
 
 import           Control.Wire
-import           Crypto.Cipher.AES
+import           Crypto.Cipher.AES128
+import           Crypto.Classes (buildKeyIO)
+import           Crypto.Modes (getIVIO)
+import           Crypto.Types (IV)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           Data.Text (Text)
@@ -44,8 +47,8 @@ main = do
     NoExpectedFailure {} -> exitFailure
     _ -> return ()
   -- Encryption
-  let k = initKey "0123456789ABCDEF"
-      iv = IV "FEDCBA9876543210"
+  k  <- buildKeyIO
+  iv <- getIVIO
   qc (prop_encryption'_is_id k iv) >>= \case
     Failure {} -> exitFailure
     GaveUp {} -> exitFailure
@@ -73,7 +76,7 @@ serialization :: Monad m => Wire Error m Track Track
 serialization = deserialize . serialize
 
 
-prop_encryption'_is_id :: Key -> IV -> ByteString -> Bool
+prop_encryption'_is_id :: AESKey -> IV AESKey -> ByteString -> Bool
 prop_encryption'_is_id k iv bs =
   let (et, _) = stepWireP (encryption' k iv) 0 bs
   in case et of
@@ -81,11 +84,11 @@ prop_encryption'_is_id k iv bs =
     _ -> False
 
 -- encryption'/decryption' wire
-encryption' :: Monad m => Key -> IV -> Wire Error m ByteString ByteString
+encryption' :: Monad m => AESKey -> IV AESKey -> Wire Error m ByteString ByteString
 encryption' k iv = decrypt' k iv . encrypt' k iv
 
 
-prop_encryption_is_id :: Key -> IV -> ByteString -> Bool
+prop_encryption_is_id :: AESKey -> IV AESKey -> ByteString -> Bool
 prop_encryption_is_id k iv bs =
   let (et, _) = stepWireP (encryption' k iv) 0 bs
   in case et of
@@ -93,5 +96,5 @@ prop_encryption_is_id k iv bs =
     _ -> False
 
 -- encryption'/decryption' wire
-encryption :: Monad m => Key -> IV -> Wire Error m Track Track
+encryption :: Monad m => AESKey -> IV AESKey -> Wire Error m Track Track
 encryption k iv = decrypt k iv . encrypt k iv

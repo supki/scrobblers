@@ -16,7 +16,9 @@ import System.Timeout (timeout)
 
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
-import qualified Crypto.Cipher.AES as AES
+import           Crypto.Cipher.AES128
+import           Crypto.Classes (BlockCipher(ctr, unCtr))
+import           Crypto.Types (IV)
 import           Data.ByteString (ByteString)
 import           Data.Serialize (Serialize, decode, encode)
 import           Network
@@ -52,21 +54,23 @@ receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
 
 
 -- | Encrypt 'Track' with RSA 'Wire'
-encrypt :: (Serialize b, Monad m) => AES.Key -> AES.IV -> Wire e m b ByteString
+encrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Wire e m b ByteString
 encrypt k iv = encrypt' k iv . serialize
 
 -- | Encrypt 'ByteString' with RSA 'Wire'
-encrypt' :: Monad m => AES.Key -> AES.IV -> Wire e m ByteString ByteString
-encrypt' k iv = arr (AES.encryptCTR k iv)
+encrypt' :: Monad m => AESKey -> IV AESKey -> Wire e m ByteString ByteString
+encrypt' k iv = mkState iv $ \_dt (bs, iv') ->
+  let (bs', iv'') = ctr k iv' bs in (Right bs', iv'')
 
 
 -- | Decrypt 'Track' with RSA 'Wire'
-decrypt :: (Serialize b, Monad m) => AES.Key -> AES.IV -> Wire Error m ByteString b
+decrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Wire Error m ByteString b
 decrypt k iv = deserialize . decrypt' k iv
 
 -- | Decrypt 'ByteString' with RSA 'Wire'
-decrypt' :: Monad m => AES.Key -> AES.IV -> Wire e m ByteString ByteString
-decrypt' k iv = arr (AES.decryptCTR k iv)
+decrypt' :: Monad m => AESKey -> IV AESKey -> Wire e m ByteString ByteString
+decrypt' k iv = mkState iv $ \_dt (bs, iv') ->
+  let (bs', iv'') = unCtr k iv' bs in (Right bs', iv'')
 
 
 -- | 'Serialize' datum for network transmission
