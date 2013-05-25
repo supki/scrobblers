@@ -1,4 +1,4 @@
--- | Lastfm scrobbler
+-- | Lastfm scrobblers making library
 --
 -- Based on @liblastfm@ and @netwire@ (and other twenty packages)
 module Control.Scrobbler
