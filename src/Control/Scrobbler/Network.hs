@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 -- | Scrobbler networking. Connects different scrobblers in chain
 --
 -- Supports optional encryption
@@ -20,6 +21,8 @@ import           Crypto.Cipher.AES128
 import           Crypto.Classes (BlockCipher(ctr, unCtr))
 import           Crypto.Types (IV)
 import           Data.ByteString (ByteString)
+import           Data.Sequence (ViewL(..), (|>), viewl)
+import qualified Data.Sequence as Q
 import           Data.Serialize (Serialize, decode, encode)
 import           Network
 import qualified Data.ByteString as B
@@ -29,13 +32,17 @@ import Control.Scrobbler.Types
 
 -- | Send serialized 'Track' over the wire
 send :: MonadIO m => HostName -> PortID -> Wire Error m ByteString ()
-send hn pid = mkFixM $ \_dt bs -> liftIO $ do
-  h <- connectTo hn pid
-  B.hPut h (B.singleton (fromIntegral (B.length bs)))
-  B.hPut h bs
-  return (Right ())
- `mplus`
-  return (Left NoSend)
+send hn pid = mkStateM Q.empty $ \_dt (bs, q) -> liftIO $ queue (q |> bs)
+ where
+  queue   (viewl ->   EmptyL) = return (Right (), Q.empty)
+  queue q@(viewl -> bs :< q') = do
+    h <- connectTo hn pid
+    B.hPut h (B.singleton (fromIntegral (B.length bs)))
+    B.hPut h bs
+    queue q'
+   `mplus`
+    return (Left NoSend, q)
+  queue q = return (Left NoSend, q)
 
 
 -- | Receive 'Track' over the wire
