@@ -111,6 +111,47 @@ main = scrobbler $
 ```
 [Casual][2] example is basically this but also with some debug information included.
 
+## Advanced stuff
+
+### Networking
+
+You can split your scrobbler in parts, if you don't like having your lastfm information
+on machine where player is started. Or, for example, you want to have one scrobbler for
+all players. Or something like that
+
+  * Serialization
+
+	```haskell
+	deserialize :: (Serialize b, Monad m) => Wire Error m ByteString b
+	serialize :: (Serialize a, Monad m) => Wire e m a ByteString
+	```
+
+	`serialize` and `deserialize` wires help with serialization of any stuff you can get
+	in the process of scrobbling
+
+  * Encryption
+
+    ```haskell
+	encrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Wire e m b ByteString
+	decrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Wire Error m ByteString b
+	```
+
+	`encrypt` and `decrypt` wires help with encryption of the same stuff. They do
+	serialization too, use `encrypt'` and `decrypt'` variants if for some reason
+	you don't want them to
+
+  * Communication
+
+    Finally:
+
+	```haskell
+	send :: HostName -> PortID -> Wire Error IO ByteString ()
+	receive :: PortID -> Wire Error IO () ByteString
+	```
+
+	`send` and `receive` will transmit bytestrings back and forth. `send` also maintains the queue of
+	faliures and tries to resubmit them every time it gets a chance.
+
 
  [0]: http://www.last.fm/api/scrobbling
  [1]: http://www.last.fm/
