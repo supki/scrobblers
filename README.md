@@ -152,7 +152,10 @@ all players. Or something like that
 	`send` and `receive` will transmit bytestrings back and forth. `send` also maintains the queue of
 	faliures and tries to resubmit them every time it gets a chance.
 
+[Hardcore][3] example demonstrates networking
+
 
  [0]: http://www.last.fm/api/scrobbling
  [1]: http://www.last.fm/
  [2]: https://github.com/supki/scrobblers/blob/master/examples/Casual.hs
+ [3]: https://github.com/supki/scrobblers/blob/master/examples/Hardcore.hs
