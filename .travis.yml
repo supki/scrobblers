@@ -1,4 +1,4 @@
 language: haskell
 install:
- - cabal install  --force-reinstalls
+ - cabal install  --force-reinstalls --constraint='template-haskell installed'
 script: true
