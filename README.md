@@ -1,5 +1,7 @@
 # scrobblers
 
+[![Build Status](https://travis-ci.org/supki/scrobblers.png)](https://travis-ci.org/supki/scrobblers)
+
 Lastfm scrobblers making library
 
 # What's scrobbling?
