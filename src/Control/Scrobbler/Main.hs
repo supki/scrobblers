@@ -30,10 +30,10 @@ import Control.Scrobbler.Types
 -- @
 --
 -- if you don't need advanced features like network interactions
-scrobbler :: Wire Error IO () a -> IO ()
+scrobbler :: Scrobbler' () a -> IO ()
 scrobbler loop = forever $ void (loop' loop clockSession) `catchAll` \_ -> return ()
  where
-  loop' :: MonadIO m => Wire Error m () a -> Session m -> m ()
+  loop' :: MonadIO m => Scrobbler m () a -> Session m -> m ()
   loop' w' session' = do
     (_, w, session) <- stepSession w' session' ()
     liftIO (threadDelay 1000000)
@@ -41,7 +41,7 @@ scrobbler loop = forever $ void (loop' loop clockSession) `catchAll` \_ -> retur
 
 
 -- | Announces successful scrobbles in stdout
-announcer :: Wire Error IO () (Successes Track) -> IO ()
+announcer :: Scrobbler' () (Successes Track) -> IO ()
 announcer w = scrobbler (announce . w)
 {-# INLINE announcer #-}
 
@@ -49,12 +49,12 @@ announcer w = scrobbler (announce . w)
 -- | Passes data from source to destination
 link :: PortID             -- ^ Source
      -> (HostName, PortID) -- ^ Destination
-     -> Wire Error IO ByteString ByteString -> IO ()
+     -> Scrobbler' ByteString ByteString -> IO ()
 link p (h, p') w = scrobbler (send h p' . w . receive p)
 {-# INLINE link #-}
 
 -- | Alias for 'link'
-(==>) :: PortID -> (HostName, PortID) -> Wire Error IO ByteString ByteString -> IO ()
+(==>) :: PortID -> (HostName, PortID) -> Scrobbler' ByteString ByteString -> IO ()
 (==>) = link
 {-# INLINE (==>) #-}
 

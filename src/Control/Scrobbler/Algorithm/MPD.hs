@@ -28,10 +28,10 @@ data MPD
 
 
 -- | Look for player state changes over time
-candidate :: MonadIO m => Wire Error m () (PlayerStateChange Track)
+candidate :: MonadIO m => Scrobbler m () (PlayerStateChange Track)
 candidate = candidate' . time'
 
-candidate' :: MonadIO m => Wire Error m Int64 (PlayerStateChange Track)
+candidate' :: MonadIO m => Scrobbler m Int64 (PlayerStateChange Track)
 candidate' = mkStateM NotPlaying $ \_dt (t, s) -> liftIO $ do
   lt <- round <$> getPOSIXTime
   -- Wait 5 seconds to complete query. That should be enough

@@ -13,10 +13,10 @@ import Control.Scrobbler.Types
 -- | Check if candidate is ready to be scrobbled
 --
 -- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
-contest :: Monad m => Wire Error m (PlayerStateChange Track) (Scrobble Track)
+contest :: Monad m => Scrobbler m (PlayerStateChange Track) (Scrobble Track)
 contest = contest' . (time' &&& id)
 
-contest' :: Wire Error m (Int64, PlayerStateChange Track) (Scrobble Track)
+contest' :: Scrobbler m (Int64, PlayerStateChange Track) (Scrobble Track)
 contest' = mkState Stopped $ \_dt ((t, ch), tr) -> (change (Left NoScrobbles) (go t) tr, ch)
  where
   go t tr

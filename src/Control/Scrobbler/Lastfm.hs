@@ -35,7 +35,7 @@ data Credentials = Credentials
 
 
 -- | Scrobble track
-scrobble :: MonadIO m => Credentials -> Wire Error m (Scrobble Track) (Successes Track)
+scrobble :: MonadIO m => Credentials -> Scrobbler m (Scrobble Track) (Successes Track)
 scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] $ \_dt -> liftIO . go
  where
   go (Scrobble ft, ts) = do
@@ -76,7 +76,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
 
 -- | Update lastfm user profile page 'now playing' status
 updateNowPlaying :: MonadIO m
-                 => Credentials -> Wire Error m (PlayerStateChange Track) (PlayerStateChange Track)
+                 => Credentials -> Scrobbler m (PlayerStateChange Track) (PlayerStateChange Track)
 updateNowPlaying Credentials { secret = s, apiKey = ak, sessionKey = sk } =
   mkFixM $ \_dt -> liftIO . liftM Right . traverse (\t -> go t >> return t)
  where

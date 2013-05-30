@@ -10,11 +10,30 @@ import Data.Monoid (mempty)
 import Prelude hiding (length)
 
 import           Control.Lens
+import           Control.Wire (Wire)
 import           Data.Default (Default(..))
 import           Data.Serialize (Serialize(..), getWord8, putWord8)
 import           Data.Text (Text)
 import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
 import qualified Network.Lastfm as L
+
+
+
+-- | Scrobbler type. \"Transforms\" @a@ into @b@ over @m@
+type Scrobbler m a b = Wire ScrobblerError m a b
+
+-- | Specialized 'Scrobbler'
+type Scrobbler' a b = Scrobbler IO a b
+
+
+-- | Scrobbler errors
+data ScrobblerError
+  = NoCandidate
+  | NoScrobbles
+  | NoDecoding String
+  | NoSend
+  | NoReceive
+    deriving (Show, Read, Eq, Ord)
 
 
 -- | Change in 'Player' state
@@ -146,13 +165,3 @@ instance Traversable Scrobble where
 instance Serialize a => Serialize (Scrobble a) where
   put (Scrobble a) = put a
   get = Scrobble <$> get
-
-
--- | Scrobbler errors
-data Error
-  = NoCandidate
-  | NoScrobbles
-  | NoDecoding String
-  | NoSend
-  | NoReceive
-    deriving (Show, Read, Eq, Ord)

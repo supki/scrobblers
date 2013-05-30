@@ -24,18 +24,21 @@ main = scrobbler $
   scrobble credentials . contest . updateNowPlaying credentials . candidate
 ```
 
-All these parts are actually quite simple, but to explain them, we need to "explain" `Wire`
+All these parts are actually quite simple, but to explain them, we need to "explain" `Scrobbler`
 
-## Wait, what's `Wire`?
+## Wait, what's `Scrobbler`?
 
-I'll just quote the relevant part of definition:
+I'll just quote the relevant parts of definitions:
 
 ```haskell
 data Wire e m a b
     = WGen (Time -> a -> m (Either e b, Wire e m a b))
   ...
+
+type Scrobbler m a b = Wire ScrobblerError m a b
+type Scrobbler' a b = Scrobbler IO a b
 ```
-I think definition explains `Wire` fairly well, but if not, you may think of it
+I think definitions explain `Scrobbler` fairly well, but if not, you may think of it
 being function `Monad m => a -> m b` that may "error" and also has some "internal state". So,
 
 ## What are parts our scrobbler is composed of?
@@ -61,11 +64,11 @@ data Track = Track
   }
 ```
 
-Okay, we are all set, let's describe `Wire`s:
+Okay, we are all set, let's describe `Scrobbler`s:
 
 ### Getting scrobblers candidates
 ```haskell
-candidate :: Wire Error IO Time (PlayerStateChange Track)
+candidate :: Scrobbler' Time (PlayerStateChange Track)
 ```
 That wire repeatedly asks player (in our case, that player would be MPD) if its state was changed.
 
@@ -79,14 +82,14 @@ We are not interested in answer 1 at all, but we want to know if 2 or 3 happened
 
 ### Update [last.fm][1] profile status
 ```haskell
-updateNowPlaying :: Credentials -> Wire Error IO (PlayerStateChange Track) (PlayerStateChange Track)`
+updateNowPlaying :: Credentials -> Scrobbler' (PlayerStateChange Track) (PlayerStateChange Track)`
 ```
 That wire notifies [last.fm][1] about changes in player state (only if it worth it:
 surely nobody wants to know you stopped playing music) and passes its argument further
 
 ### Test if track is worth scrobbling
 ```haskell
-contest :: Wire Error IO (PlayerStateChange Track) (Scrobble Track)
+contest :: Scrobbler' (PlayerStateChange Track) (Scrobble Track)
 ```
 That wire has internal state: previously played track. If player started to playing
 the new one or stopped to play anything, we want to know if that previous track
@@ -97,7 +100,7 @@ is worth scrobbling. There are 2 choices there:
 
 ### Finally, scrobble track
 ```haskell
-scrobble :: Credentials -> Wire Error IO (Scrobble Track) (Successes Track)
+scrobble :: Credentials -> Scrobbler' (Scrobble Track) (Successes Track)
 ```
 That wire tries to scrobble incoming `Track` and also all other failed to scrobble
 before tracks (if they exist) and returns the list of successes
@@ -124,8 +127,8 @@ all players. Or something like that
   * Serialization
 
 	```haskell
-	deserialize :: (Serialize b, Monad m) => Wire Error m ByteString b
-	serialize :: (Serialize a, Monad m) => Wire e m a ByteString
+	deserialize :: Serialize b => Scrobbler' ByteString b
+	serialize :: Serialize a => Scrobbler' a ByteString
 	```
 
 	`serialize` and `deserialize` wires help with serialization of any stuff you can get
@@ -134,8 +137,8 @@ all players. Or something like that
   * Encryption
 
     ```haskell
-	encrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Wire e m b ByteString
-	decrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Wire Error m ByteString b
+	encrypt :: Serialize a => AESKey -> IV AESKey -> Scrobbler' a ByteString
+	decrypt :: Serialize b => AESKey -> IV AESKey -> Scrobbler' ByteString b
 	```
 
 	`encrypt` and `decrypt` wires help with encryption of the same stuff. They do
@@ -147,8 +150,8 @@ all players. Or something like that
     Finally:
 
 	```haskell
-	send :: HostName -> PortID -> Wire Error IO ByteString ()
-	receive :: PortID -> Wire Error IO () ByteString
+	send :: HostName -> PortID -> Scrobbler' ByteString ()
+	receive :: PortID -> Scrobbler' () ByteString
 	```
 
 	`send` and `receive` will transmit bytestrings back and forth. `send` also maintains the queue of

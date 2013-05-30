@@ -31,7 +31,7 @@ import Control.Scrobbler.Types
 
 
 -- | Send serialized 'Track' over the wire
-send :: MonadIO m => HostName -> PortID -> Wire Error m ByteString ()
+send :: MonadIO m => HostName -> PortID -> Scrobbler m ByteString ()
 send hn pid = mkStateM Q.empty $ \_dt (bs, q) -> liftIO $ queue (q |> bs)
  where
   queue   (viewl ->   EmptyL) = return (Right (), Q.empty)
@@ -46,7 +46,7 @@ send hn pid = mkStateM Q.empty $ \_dt (bs, q) -> liftIO $ queue (q |> bs)
 
 
 -- | Receive 'Track' over the wire
-receive :: MonadIO m => PortID -> Wire Error m () ByteString
+receive :: MonadIO m => PortID -> Scrobbler m () ByteString
 receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
   s <- maybe (listenOn pid) return ms
   r <- timeout 1000000 (accept s)
@@ -61,30 +61,30 @@ receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
 
 
 -- | Encrypt 'Track' with RSA 'Wire'
-encrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Wire e m b ByteString
+encrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Scrobbler m b ByteString
 encrypt k iv = encrypt' k iv . serialize
 
 -- | Encrypt 'ByteString' with RSA 'Wire'
-encrypt' :: Monad m => AESKey -> IV AESKey -> Wire e m ByteString ByteString
+encrypt' :: Monad m => AESKey -> IV AESKey -> Scrobbler m ByteString ByteString
 encrypt' k iv = mkState iv $ \_dt (bs, iv') ->
   let (bs', iv'') = ctr k iv' bs in (Right bs', iv'')
 
 
 -- | Decrypt 'Track' with RSA 'Wire'
-decrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Wire Error m ByteString b
+decrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Scrobbler m ByteString b
 decrypt k iv = deserialize . decrypt' k iv
 
 -- | Decrypt 'ByteString' with RSA 'Wire'
-decrypt' :: Monad m => AESKey -> IV AESKey -> Wire e m ByteString ByteString
+decrypt' :: Monad m => AESKey -> IV AESKey -> Scrobbler m ByteString ByteString
 decrypt' k iv = mkState iv $ \_dt (bs, iv') ->
   let (bs', iv'') = unCtr k iv' bs in (Right bs', iv'')
 
 
 -- | 'Serialize' datum for network transmission
-serialize :: (Serialize a, Monad m) => Wire e m a ByteString
+serialize :: (Serialize a, Monad m) => Scrobbler m a ByteString
 serialize = arr encode
 
 
 -- | De'Serialize' datum after network transmission
-deserialize :: (Serialize b, Monad m) => Wire Error m ByteString b
+deserialize :: (Serialize b, Monad m) => Scrobbler m ByteString b
 deserialize = mkFix $ \_dt -> left NoDecoding . decode

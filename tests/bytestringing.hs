@@ -72,7 +72,7 @@ prop_serialization_is_id t =
     _ -> False
 
 -- serialization/desialization wire
-serialization :: Monad m => Wire Error m Track Track
+serialization :: Monad m => Scrobbler m Track Track
 serialization = deserialize . serialize
 
 
@@ -84,7 +84,7 @@ prop_encryption'_is_id k iv bs =
     _ -> False
 
 -- encryption'/decryption' wire
-encryption' :: Monad m => AESKey -> IV AESKey -> Wire Error m ByteString ByteString
+encryption' :: Monad m => AESKey -> IV AESKey -> Scrobbler m ByteString ByteString
 encryption' k iv = decrypt' k iv . encrypt' k iv
 
 
@@ -96,5 +96,5 @@ prop_encryption_is_id k iv bs =
     _ -> False
 
 -- encryption'/decryption' wire
-encryption :: Monad m => AESKey -> IV AESKey -> Wire Error m Track Track
+encryption :: Monad m => AESKey -> IV AESKey -> Scrobbler m Track Track
 encryption k iv = decrypt k iv . encrypt k iv
