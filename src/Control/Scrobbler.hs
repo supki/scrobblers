@@ -12,7 +12,7 @@ module Control.Scrobbler
 
 import Control.Scrobbler.Algorithm (contest)
 import Control.Scrobbler.Announce (Announce(..), announce)
-import Control.Scrobbler.Lastfm (updateNowPlaying, scrobble)
+import Control.Scrobbler.Lastfm
 import Control.Scrobbler.Main
 import Control.Scrobbler.Network
 import Control.Scrobbler.Types

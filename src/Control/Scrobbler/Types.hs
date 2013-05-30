@@ -156,11 +156,3 @@ data Error
   | NoSend
   | NoReceive
     deriving (Show, Read, Eq, Ord)
-
-
--- | Lastfm API credentials
-data Credentials = Credentials
-  { apiKey :: Text
-  , sessionKey :: Text
-  , secret :: L.Secret
-  } deriving (Show)

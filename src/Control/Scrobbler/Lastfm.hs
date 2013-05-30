@@ -2,7 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- | Lastfm interaction
 module Control.Scrobbler.Lastfm
-  ( updateNowPlaying
+  ( Credentials(..)
+  , updateNowPlaying
   , scrobble
   ) where
 
@@ -16,12 +17,21 @@ import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import qualified Data.Aeson as A
 import           Data.ByteString.Lazy (fromStrict)
+import           Data.Text (Text)
 import           Network.HTTP.Conduit (HttpException(..))
 import           Network.HTTP.Types
 import qualified Network.Lastfm as L
 import qualified Network.Lastfm.Track as T
 
 import Control.Scrobbler.Types
+
+
+-- | Lastfm API credentials
+data Credentials = Credentials
+  { apiKey :: Text
+  , sessionKey :: Text
+  , secret :: L.Secret
+  } deriving (Show)
 
 
 -- | Scrobble track
