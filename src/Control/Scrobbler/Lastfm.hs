@@ -75,7 +75,8 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
 
 
 -- | Update lastfm user profile page 'now playing' status
-updateNowPlaying :: (Traversable f, MonadIO m) => Credentials -> Wire Error m (f Track) (f Track)
+updateNowPlaying :: MonadIO m
+                 => Credentials -> Wire Error m (PlayerStateChange Track) (PlayerStateChange Track)
 updateNowPlaying Credentials { secret = s, apiKey = ak, sessionKey = sk } =
   mkFixM $ \_dt -> liftIO . liftM Right . traverse (\t -> go t >> return t)
  where
