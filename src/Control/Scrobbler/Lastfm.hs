@@ -28,9 +28,9 @@ import Control.Scrobbler.Types
 
 -- | Lastfm API credentials
 data Credentials = Credentials
-  { apiKey :: Text
-  , sessionKey :: Text
-  , secret :: L.Secret
+  { apiKey     :: !Text
+  , sessionKey :: !Text
+  , secret     :: !L.Secret
   } deriving (Show)
 
 

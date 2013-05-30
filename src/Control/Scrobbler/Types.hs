@@ -42,7 +42,7 @@ data ScrobblerError
 --
 -- We need it because we want to capture pausing/stopping
 -- the player as well as chaining tracks
-data PlayerStateChange a = Started a | Stopped
+data PlayerStateChange a = Started !a | Stopped
     deriving (Show, Read)
 
 instance Functor PlayerStateChange where
@@ -69,12 +69,12 @@ instance Serialize a => Serialize (PlayerStateChange a) where
 
 -- | Track information
 data Track = Track
-  { _start  :: Int64 -- ^ track start relative to scrobbler start time
-  , _title  :: Text  -- ^ title
-  , _artist :: Text  -- ^ artist
-  , _album  :: Text  -- ^ album title (optional)
-  , _length :: Int64 -- ^ duration
-  , _local  :: Int64 -- ^ scrobble timestamp
+  { _start  :: !Int64 -- ^ track start relative to scrobbler start time
+  , _title  :: !Text  -- ^ title
+  , _artist :: !Text  -- ^ artist
+  , _album  :: !Text  -- ^ album title (optional)
+  , _length :: !Int64 -- ^ duration
+  , _local  :: !Int64 -- ^ scrobble timestamp
   } deriving (Show, Read, Eq, Ord)
 
 makeLensesWith ?? ''Track $ defaultRules & generateSignatures .~ False
