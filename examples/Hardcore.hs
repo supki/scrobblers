@@ -24,7 +24,8 @@ main = do
   -- we need that too because that's two way communication and using
   -- the same IV twice is unsafe
   iv' <- getIVIO
-  -- Scrobbling
+  -- Another way would be to use 2 different keys and
+  -- both IVs could be zeroIV then
   doWork k iv iv'
 
 
