@@ -60,21 +60,21 @@ receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
   return (Left NoReceive, Nothing)
 
 
--- | Encrypt 'Track' with RSA 'Wire'
+-- | Encrypt 'Track' with AES-CTR 'Wire'
 encrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Scrobbler m b ByteString
 encrypt k iv = encrypt' k iv . serialize
 
--- | Encrypt 'ByteString' with RSA 'Wire'
+-- | Encrypt 'ByteString' with AES-CTR 'Wire'
 encrypt' :: Monad m => AESKey -> IV AESKey -> Scrobbler m ByteString ByteString
 encrypt' k iv = mkState iv $ \_dt (bs, iv') ->
   let (bs', iv'') = ctr k iv' bs in (Right bs', iv'')
 
 
--- | Decrypt 'Track' with RSA 'Wire'
+-- | Decrypt 'Track' with AES-CTR 'Wire'
 decrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Scrobbler m ByteString b
 decrypt k iv = deserialize . decrypt' k iv
 
--- | Decrypt 'ByteString' with RSA 'Wire'
+-- | Decrypt 'ByteString' with AES-CTR 'Wire'
 decrypt' :: Monad m => AESKey -> IV AESKey -> Scrobbler m ByteString ByteString
 decrypt' k iv = mkState iv $ \_dt (bs, iv') ->
   let (bs', iv'') = unCtr k iv' bs in (Right bs', iv'')
