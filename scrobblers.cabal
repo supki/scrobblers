@@ -50,6 +50,7 @@ test-suite bytestringing
   build-depends:
     base >= 3 && < 5,
     bytestring,
+    mtl,
     text,
     netwire,
     QuickCheck,

@@ -19,7 +19,8 @@ import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import           Crypto.Cipher.AES128
 import           Crypto.Classes (BlockCipher(ctr, unCtr))
-import           Crypto.Types (IV)
+import           Crypto.Types (IV(..))
+import           Crypto.Modes (getIVIO)
 import           Data.ByteString (ByteString)
 import           Data.Sequence (ViewL(..), (|>), viewl)
 import qualified Data.Sequence as Q
@@ -61,23 +62,27 @@ receive pid = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
 
 
 -- | Encrypt 'Track' with AES-CTR 'Wire'
-encrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Scrobbler m b ByteString
-encrypt k iv = encrypt' k iv . serialize
+encrypt :: (Serialize b, MonadIO m) => AESKey -> Scrobbler m b ByteString
+encrypt k = encrypt' k . serialize
 
 -- | Encrypt 'ByteString' with AES-CTR 'Wire'
-encrypt' :: Monad m => AESKey -> IV AESKey -> Scrobbler m ByteString ByteString
-encrypt' k iv = mkState iv $ \_dt (bs, iv') ->
-  let (bs', iv'') = ctr k iv' bs in (Right bs', iv'')
+encrypt' :: MonadIO m => AESKey -> Scrobbler m ByteString ByteString
+encrypt' k = mkStateM Nothing $ \_dt (bs, s) -> do
+  IV iv <- maybe (liftIO getIVIO) return s
+  let (bs', iv') = ctr k (IV iv) bs
+  return (Right (iv `B.append` bs'), Just iv')
 
 
 -- | Decrypt 'Track' with AES-CTR 'Wire'
-decrypt :: (Serialize b, Monad m) => AESKey -> IV AESKey -> Scrobbler m ByteString b
-decrypt k iv = deserialize . decrypt' k iv
+decrypt :: (Serialize b, MonadIO m) => AESKey -> Scrobbler m ByteString b
+decrypt k = deserialize . decrypt' k
 
 -- | Decrypt 'ByteString' with AES-CTR 'Wire'
-decrypt' :: Monad m => AESKey -> IV AESKey -> Scrobbler m ByteString ByteString
-decrypt' k iv = mkState iv $ \_dt (bs, iv') ->
-  let (bs', iv'') = unCtr k iv' bs in (Right bs', iv'')
+decrypt' :: Monad m => AESKey -> Scrobbler m ByteString ByteString
+decrypt' k = mkFix $ \_dt bs ->
+  let (bs', iv) = B.splitAt 16 bs
+      (bs'', _) = unCtr k (IV iv) bs'
+  in (Right bs'')
 
 
 -- | 'Serialize' datum for network transmission
