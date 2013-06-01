@@ -80,7 +80,7 @@ decrypt k = deserialize . decrypt' k
 -- | Decrypt 'ByteString' with AES-CTR 'Wire'
 decrypt' :: Monad m => AESKey -> Scrobbler m ByteString ByteString
 decrypt' k = mkFix $ \_dt bs ->
-  let (bs', iv) = B.splitAt 16 bs
+  let (iv, bs') = B.splitAt 16 bs
       (bs'', _) = unCtr k (IV iv) bs'
   in (Right bs'')
 
