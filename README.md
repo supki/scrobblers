@@ -137,8 +137,8 @@ all players. Or something like that
   * Encryption
 
     ```haskell
-	encrypt :: Serialize a => AESKey -> IV AESKey -> Scrobbler' a ByteString
-	decrypt :: Serialize b => AESKey -> IV AESKey -> Scrobbler' ByteString b
+	encrypt :: Serialize a => AESKey -> Scrobbler' a ByteString
+	decrypt :: Serialize b => AESKey -> Scrobbler' ByteString b
 	```
 
 	`encrypt` and `decrypt` wires help with encryption of the same stuff. They do
