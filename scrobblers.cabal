@@ -74,6 +74,7 @@ test-suite behaviours
     netwire,
     QuickCheck,
     hspec,
+    network,
     -- crypto-api,
     -- cipher-aes128,
     scrobblers
