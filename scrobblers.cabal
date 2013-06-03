@@ -53,6 +53,7 @@ test-suite bytestringing
     mtl,
     text,
     netwire,
+    hspec,
     QuickCheck,
     crypto-api,
     cipher-aes128,

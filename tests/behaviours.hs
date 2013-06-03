@@ -1,11 +1,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Main where
 
+import Control.Monad (unless)
 import Prelude hiding ((.), id)
+import System.Exit (exitFailure)
 
-import           Control.Wire
+import           Control.Wire hiding (unless)
 import qualified Data.Text as T
 import           Test.Hspec
+import           Test.Hspec.Runner
 import           Test.Hspec.QuickCheck
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
@@ -25,9 +28,13 @@ instance Arbitrary Track where
 
 
 main :: IO ()
-main = hspec $
-  describe "announcements" $
-    prop "does nothing with its argument" $ announcement_is_id
+main = do
+  r <- hspecWith options $
+    describe "announcements" $
+      prop "does nothing with its argument" $ announcement_is_id
+  unless (summaryFailures r == 0) exitFailure
+ where
+  options = defaultConfig { configQuickCheckArgs = stdArgs { maxSuccess = 500 } }
 
 -- Since 'announce' is sufficiently polymorphic
 -- it's enough to check property on 'Track' only

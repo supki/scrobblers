@@ -4,16 +4,20 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Main where
 
+import Control.Monad (unless)
 import Prelude hiding ((.), id)
 import System.Exit (exitFailure)
 
 import           Control.Monad.Trans (MonadIO)
-import           Control.Wire
+import           Control.Wire hiding (unless)
 import           Crypto.Cipher.AES128
 import           Crypto.Classes (buildKeyIO)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.Text as T
+import           Test.Hspec
+import           Test.Hspec.Runner
+import           Test.Hspec.QuickCheck
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 
@@ -36,25 +40,19 @@ instance Arbitrary Track where
 
 main :: IO ()
 main = do
-  -- Serialization
-  qc prop_serialization_is_id >>= \case
-    Failure {} -> exitFailure
-    GaveUp {} -> exitFailure
-    NoExpectedFailure {} -> exitFailure
-    _ -> return ()
-  -- Encryption
   k  <- buildKeyIO
-  qc (prop_encryption'_is_id k) >>= \case
-    Failure {} -> exitFailure
-    GaveUp {} -> exitFailure
-    NoExpectedFailure {} -> exitFailure
-    _ -> return ()
+  r <- hspecWith options $ do
+    describe "serialization" $
+      prop "serialization/deserialization is identity morphism" $ serialization_is_id
+    describe "encryption" $
+      prop "encryption/decryption is identity morphism" $ encryption'_is_id k
+  unless (summaryFailures r == 0) exitFailure
  where
-  qc = quickCheckWithResult stdArgs { maxSuccess = 500 }
+  options = defaultConfig { configQuickCheckArgs = stdArgs { maxSuccess = 500 } }
 
 
-prop_serialization_is_id :: Track -> Bool
-prop_serialization_is_id t =
+serialization_is_id :: Track -> Bool
+serialization_is_id t =
   let (et, _) = stepWireP serialization 0 t
   in case et of
     Right t' -> t == t'
@@ -65,8 +63,8 @@ serialization :: Monad m => Scrobbler m Track Track
 serialization = deserialize . serialize
 
 
-prop_encryption'_is_id :: AESKey -> ByteString -> Property
-prop_encryption'_is_id k bs = monadicIO $ do
+encryption'_is_id :: AESKey -> ByteString -> Property
+encryption'_is_id k bs = monadicIO $ do
   x <- run $ do
     (et, _) <- stepWire (encryption' k) 0 bs
     return $ case et of
