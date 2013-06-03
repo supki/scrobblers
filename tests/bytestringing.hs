@@ -70,11 +70,13 @@ serialization = deserialize . serialize
 
 
 prop_encryption'_is_id :: AESKey -> ByteString -> Property
-prop_encryption'_is_id k bs = monadicIO . run $ do
-  (et, _) <- stepWire (encryption' k) 0 bs
-  return $ case et of
-    Right bs' -> bs == bs'
-    _ -> False
+prop_encryption'_is_id k bs = monadicIO $ do
+  x <- run $ do
+    (et, _) <- stepWire (encryption' k) 0 bs
+    return $ case et of
+      Right bs' -> bs == bs'
+      _ -> False
+  assert x
 
 -- encryption'/decryption' wire
 encryption' :: MonadIO m => AESKey -> Scrobbler m ByteString ByteString
