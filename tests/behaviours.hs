@@ -4,9 +4,6 @@ module Main where
 import Prelude hiding ((.), id)
 
 import           Control.Wire
-import           Data.ByteString (ByteString)
-import qualified Data.ByteString as B
-import           Data.Text (Text)
 import qualified Data.Text as T
 import           Test.Hspec
 import           Test.Hspec.QuickCheck
@@ -17,18 +14,12 @@ import Control.Scrobbler.Announce
 import Control.Scrobbler.Types
 
 
-instance Arbitrary ByteString where
-  arbitrary = B.pack <$> arbitrary
-
-instance Arbitrary Text where
-  arbitrary = T.pack <$> arbitrary
-
 instance Arbitrary Track where
   arbitrary = Track
     <$> arbitrary
-    <*> arbitrary
-    <*> arbitrary
-    <*> arbitrary
+    <*> (T.pack <$> arbitrary)
+    <*> (T.pack <$> arbitrary)
+    <*> (T.pack <$> arbitrary)
     <*> arbitrary
     <*> arbitrary
 
