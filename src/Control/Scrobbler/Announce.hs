@@ -13,6 +13,8 @@ import Prelude hiding ((.), id)
 
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
+import           Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import qualified Data.Text as T
 
 import Control.Scrobbler.Types
@@ -36,6 +38,9 @@ instance Announce a => Announce (Scrobble a) where
 
 instance Announce a => Announce (Successes a) where
   message (Successes ps) = intercalate "\n" ("* Successfully scrobbled:" : fmap message ps)
+
+instance Announce ByteString where
+  message bs = "* Raw data: " ++ show (B.unpack bs)
 
 
 -- | 'Announce' in 'IO'
