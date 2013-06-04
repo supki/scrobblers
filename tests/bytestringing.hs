@@ -1,10 +1,9 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Main where
 
 import Control.Monad (unless)
+import Data.Word (Word8)
 import Prelude hiding ((.), id)
 import System.Exit (exitFailure)
 
@@ -24,9 +23,6 @@ import           Test.QuickCheck.Monadic
 import Control.Scrobbler.Network
 import Control.Scrobbler.Types
 
-
-instance Arbitrary ByteString where
-  arbitrary = B.pack <$> arbitrary
 
 instance Arbitrary Track where
   arbitrary = Track
@@ -63,8 +59,8 @@ serialization :: Monad m => Scrobbler m Track Track
 serialization = deserialize . serialize
 
 
-encryption'_is_id :: AESKey -> ByteString -> Property
-encryption'_is_id k bs = monadicIO $ do
+encryption'_is_id :: AESKey -> [Word8] -> Property
+encryption'_is_id k (B.pack -> bs) = monadicIO $ do
   x <- run $ do
     (et, _) <- stepWire (encryption' k) 0 bs
     return $ case et of
