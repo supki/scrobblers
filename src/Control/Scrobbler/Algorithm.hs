@@ -1,11 +1,14 @@
 -- | Common scrobbling algorithm routines
 module Control.Scrobbler.Algorithm (contest, time') where
 
+import Control.Monad (liftM)
 import Data.Int (Int64)
 import Prelude hiding ((.), id, length)
 
-import           Control.Lens
-import           Control.Wire
+import Control.Lens
+import Control.Monad.Trans (MonadIO, liftIO)
+import Control.Wire
+import Data.Time.Clock.POSIX (getPOSIXTime)
 
 import Control.Scrobbler.Types
 
@@ -13,11 +16,13 @@ import Control.Scrobbler.Types
 -- | Check if candidate is ready to be scrobbled
 --
 -- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
-contest :: Monad m => Scrobbler m (PlayerStateChange Track) (Scrobble Track)
+contest :: MonadIO m => Scrobbler m (PlayerStateChange Track) (Scrobble Track)
 contest = contest' . (time' &&& id)
 
-contest' :: Scrobbler m (Int64, PlayerStateChange Track) (Scrobble Track)
-contest' = mkState Stopped $ \_dt ((t, ch), tr) -> (change (Left NoScrobbles) (go t) tr, ch)
+contest' :: MonadIO m => Scrobbler m (Int64, PlayerStateChange Track) (Scrobble Track)
+contest' = mkStateM Stopped $ \_dt ((t, ch), tr) -> do
+  lt <- round `liftM` liftIO getPOSIXTime
+  return (change (Left NoScrobbles) (go t) tr, ch & mapped . local .~ lt)
  where
   go t tr
     -- If candidate length is less than 30 seconds, we do not scrobble it
