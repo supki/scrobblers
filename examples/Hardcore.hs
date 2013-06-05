@@ -25,7 +25,8 @@ work k = forkIO sender >> forkIO receiver >> worker
  where
   -- Receives succesful scrobbles and announces them in stdout
   receiver = announcer $
-    decrypt k . receive network'
+    -- Annotations are needed in some pathologically stupid scrobblers
+    (decrypt k . receive network' :: Scrobbler' () (Successes Track))
   -- Gets candidates from player (MPD in that case) and sends
   -- them encrypted through network to 'worker'
   sender = scrobbler $

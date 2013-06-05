@@ -14,7 +14,7 @@ import Prelude hiding ((.), id)
 import Control.Wire hiding (loop)
 import Data.ByteString (ByteString)
 
-import Control.Scrobbler.Announce (announce)
+import Control.Scrobbler.Announce
 import Control.Scrobbler.Network
 import Control.Scrobbler.Types
 
@@ -40,7 +40,7 @@ scrobbler loop = forever $ void (loop' loop clockSession) `catchAll` \_ -> retur
 
 
 -- | Announces successful scrobbles in stdout
-announcer :: Scrobbler' () (Successes Track) -> IO ()
+announcer :: Announce t => Scrobbler' () t -> IO ()
 announcer w = scrobbler (announce . w)
 {-# INLINE announcer #-}
 
