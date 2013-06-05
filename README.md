@@ -150,12 +150,12 @@ all players. Or something like that
     Finally:
 
 	```haskell
-	send :: HostName -> PortID -> Scrobbler' ByteString ()
-	receive :: PortID -> Scrobbler' () ByteString
+	send    :: NetworkSettings -> Scrobbler' ByteString ()
+	receive :: NetworkSettings -> Scrobbler' () ByteString
 	```
 
-	`send` and `receive` will transmit bytestrings back and forth. `send` also maintains the queue of
-	faliures and tries to resubmit them every time it gets a chance.
+	`send` and `receive` will transmit bytestrings back and forth. `send` also by default
+	maintains the queue of faliures and tries to resubmit them every time it gets a chance.
 
 [Hardcore][3] example demonstrates networking
 

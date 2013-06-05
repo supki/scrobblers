@@ -10,9 +10,11 @@ import Prelude hiding ((.), id)
 import System.Exit (exitFailure)
 import System.Timeout (timeout)
 
+import           Control.Lens
 import           Control.Wire hiding (unless)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.Default (def)
 import qualified Data.Text as T
 import           Network
 import           Test.Hspec
@@ -42,14 +44,28 @@ main = do
   r <- hspecWith options $ do
     describe "announcements" $
       prop "does nothing with its argument" $ announcement_is_id
-    describe "communication" $
+    describe "communication" $ do
       it "correctly maintains the queue of failures" $ do
         let ds = ["AAAA", "BBBB", "CCCC", "DDDD"]
-        (_, w) <- stepWire (send "localhost" (PortNumber 4567)) 0 "AAAA"
+        (_, w) <- stepWire (send (def & port .~ PortNumber 4567)) 0 "AAAA"
         (_, w) <- stepWire w 0 "BBBB"
         (_, w) <- stepWire w 0 "CCCC"
         forkIO $ do
           (r, _) <- stepWire (receiver (PortNumber 4567)) 0 ()
+          case r of
+            Right rs -> putMVar b rs
+            Left  _  -> return ()
+        threadDelay 100000
+        (_, _) <- stepWire w 0 "DDDD"
+        ds' <- takeMVar b
+        ds' `shouldBe` ds
+      it "correctly does not maintain the queue of failures" $ do
+        let ds = ["DDDD"]
+        (_, w) <- stepWire (send (def & port .~ PortNumber 4568 & failures .~ Drop)) 0 "AAAA"
+        (_, w) <- stepWire w 0 "BBBB"
+        (_, w) <- stepWire w 0 "CCCC"
+        forkIO $ do
+          (r, _) <- stepWire (receiver (PortNumber 4568)) 0 ()
           case r of
             Right rs -> putMVar b rs
             Left  _  -> return ()

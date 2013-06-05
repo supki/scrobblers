@@ -13,7 +13,6 @@ import Prelude hiding ((.), id)
 
 import Control.Wire hiding (loop)
 import Data.ByteString (ByteString)
-import Network
 
 import Control.Scrobbler.Announce (announce)
 import Control.Scrobbler.Network
@@ -47,14 +46,14 @@ announcer w = scrobbler (announce . w)
 
 
 -- | Passes data from source to destination
-link :: PortID             -- ^ Source
-     -> (HostName, PortID) -- ^ Destination
+link :: NetworkSettings -- ^ Source
+     -> NetworkSettings -- ^ Destination
      -> Scrobbler' ByteString ByteString -> IO ()
-link p (h, p') w = scrobbler (send h p' . w . receive p)
+link ns ns' w = scrobbler (send ns' . w . receive ns)
 {-# INLINE link #-}
 
 -- | Alias for 'link'
-(==>) :: PortID -> (HostName, PortID) -> Scrobbler' ByteString ByteString -> IO ()
+(==>) :: NetworkSettings -> NetworkSettings -> Scrobbler' ByteString ByteString -> IO ()
 (==>) = link
 {-# INLINE (==>) #-}
 

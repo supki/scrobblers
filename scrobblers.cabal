@@ -69,14 +69,13 @@ test-suite behaviours
   build-depends:
     base >= 3 && < 5,
     bytestring,
-    -- mtl,
+    data-default,
     text,
     netwire,
     QuickCheck,
     hspec,
     network,
-    -- crypto-api,
-    -- cipher-aes128,
+    lens,
     scrobblers
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
