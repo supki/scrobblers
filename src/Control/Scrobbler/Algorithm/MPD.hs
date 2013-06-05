@@ -50,13 +50,13 @@ candidate' = mkStateM NotPlaying $ \_dt (t, s) -> liftIO $ do
         Just song' <- Y.currentSong
         -- If the songs are different, then new song is a candidate to send
         if song /= song' then
-          return (Right (Started (fetchTrackData song' & start .~ t)), Playing song' t)
+          return (Right (Started (fetchTrackData song')), Playing song' t)
         else
           -- Otherwise, if song has been played more then its duration
           -- it means that its looped, so we send it as candidate once again
           let ts' = ts + fromIntegral (Y.sgLength song)
           in return $ if ts + fromIntegral (Y.sgLength song) < t
-            then (Right (Started (fetchTrackData song' & start .~ ts')), Playing song' ts')
+            then (Right (Started (fetchTrackData song')), Playing song' ts')
             -- Otherwise, there is no candidate to send
             else (Left NoCandidate, s)
   case r of

@@ -22,7 +22,7 @@ contest = contest' . (time' &&& id)
 contest' :: MonadIO m => Scrobbler m (Int64, PlayerStateChange Track) (Scrobble Track)
 contest' = mkStateM Stopped $ \_dt ((t, ch), tr) -> do
   lt <- round `liftM` liftIO getPOSIXTime
-  return (change (Left NoScrobbles) (go t) tr, ch & mapped . local .~ lt)
+  return (change (Left NoScrobbles) (go t) tr, ch & mapped . local .~ lt & mapped . start .~ t)
  where
   go t tr
     -- If candidate length is less than 30 seconds, we do not scrobble it
