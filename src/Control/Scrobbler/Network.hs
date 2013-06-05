@@ -80,7 +80,7 @@ send ns = mkStateM Q.empty $ \_dt (bs, q) -> liftIO $
     B.hPut h bs
     return (Right ())
    `mplus`
-    return (Left NoSend)
+    return (Right ())
 
   queue   (viewl ->   EmptyL) = return (Right (), Q.empty)
   queue q@(viewl -> bs :< q') = do
@@ -129,7 +129,7 @@ decrypt' :: Monad m => AESKey -> Scrobbler m ByteString ByteString
 decrypt' k = mkFix $ \_dt bs ->
   let (iv, bs') = B.splitAt 16 bs
       (bs'', _) = unCtr k (IV iv) bs'
-  in (Right bs'')
+  in Right bs''
 
 
 -- | 'Serialize' datum for network transmission
