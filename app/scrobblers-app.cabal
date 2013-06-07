@@ -13,7 +13,7 @@ cabal-version:       >= 1.10
 
 executable scrobbler-server
   default-language:  Haskell2010
-  main-is:           Client.hs
+  main-is:           Server.hs
   other-modules:     Remote
   build-depends:
     base >= 4 && < 5,
@@ -26,7 +26,7 @@ executable scrobbler-server
 
 executable scrobbler-client
   default-language:  Haskell2010
-  main-is:           Server.hs
+  main-is:           Client.hs
   other-modules:     Remote
   build-depends:
     base >= 4 && < 5,
