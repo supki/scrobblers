@@ -41,7 +41,7 @@ candidate' = mkStateM NotPlaying $ \_dt (t, s) -> liftIO $ do
       -- If we started playing just now there is a candidate to send
       (NotPlaying, Y.Playing) -> do
         Just song <- Y.currentSong
-        return (Right (Started (fetchTrackData song & start .~ t)), Playing song t)
+        return (Right (Started (fetchTrackData song)), Playing song t)
       -- If we were playing and are not playing now we send that change
       (Playing _ _,     Y.Stopped) -> return (Right Stopped, NotPlaying)
       (Playing _ _,     Y.Paused)  -> return (Right Stopped, NotPlaying)
