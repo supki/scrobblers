@@ -36,37 +36,6 @@ data ScrobblerError
     deriving (Show, Read, Eq, Ord)
 
 
--- | Change in 'Player' state
---
---
---
--- We need it because we want to capture pausing/stopping
--- the player as well as chaining tracks
-data PlayerStateChange a = Started !a | Stopped
-    deriving (Show, Read)
-
-instance Functor PlayerStateChange where
-  fmap f (Started a) = Started (f a)
-  fmap _     Stopped = Stopped
-
-instance Foldable PlayerStateChange where
-  foldMap f (Started a) = f a
-  foldMap _     Stopped = mempty
-
-instance Traversable PlayerStateChange where
-  traverse f (Started a) = Started <$> f a
-  traverse _     Stopped = pure Stopped
-
-instance Serialize a => Serialize (PlayerStateChange a) where
-  put (Started a) = putWord8 1 >> put a
-  put     Stopped = putWord8 0
-  get = do
-    tag <- getWord8
-    case tag of
-      0 -> return Stopped
-      _ -> Started <$> get
-
-
 -- | Track information
 data Track = Track
   { _start  :: !Int64 -- ^ track start relative to scrobbler start time
@@ -131,22 +100,35 @@ length :: Lens' Track Int64
 local :: Lens' Track Int64
 
 
--- | Successful scrobbles
-newtype Successes a = Successes { unSuccesses :: [a] }
+-- | Change in 'Player' state
+--
+--
+--
+-- We need it because we want to capture pausing/stopping
+-- the player as well as chaining tracks
+data PlayerStateChange a = Started !a | Stopped
     deriving (Show, Read)
 
-instance Functor Successes where
-  fmap f (Successes a) = Successes (fmap f a)
+instance Functor PlayerStateChange where
+  fmap f (Started a) = Started (f a)
+  fmap _     Stopped = Stopped
 
-instance Foldable Successes where
-  foldMap f (Successes a) = foldMap f a
+instance Foldable PlayerStateChange where
+  foldMap f (Started a) = f a
+  foldMap _     Stopped = mempty
 
-instance Traversable Successes where
-  traverse f (Successes a) = Successes <$> traverse f a
+instance Traversable PlayerStateChange where
+  traverse f (Started a) = Started <$> f a
+  traverse _     Stopped = pure Stopped
 
-instance Serialize a => Serialize (Successes a) where
-  put (Successes a) = put a
-  get = Successes <$> get
+instance Serialize a => Serialize (PlayerStateChange a) where
+  put (Started a) = putWord8 1 >> put a
+  put     Stopped = putWord8 0
+  get = do
+    tag <- getWord8
+    case tag of
+      0 -> return Stopped
+      _ -> Started <$> get
 
 
 -- | What to scrobble
@@ -165,3 +147,21 @@ instance Traversable Scrobble where
 instance Serialize a => Serialize (Scrobble a) where
   put (Scrobble a) = put a
   get = Scrobble <$> get
+
+
+-- | Successful scrobbles
+newtype Successes a = Successes { unSuccesses :: [a] }
+    deriving (Show, Read)
+
+instance Functor Successes where
+  fmap f (Successes a) = Successes (fmap f a)
+
+instance Foldable Successes where
+  foldMap f (Successes a) = foldMap f a
+
+instance Traversable Successes where
+  traverse f (Successes a) = Successes <$> traverse f a
+
+instance Serialize a => Serialize (Successes a) where
+  put (Successes a) = put a
+  get = Successes <$> get
