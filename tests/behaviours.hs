@@ -30,10 +30,14 @@ import Control.Scrobbler.Types
 
 instance Arbitrary Track where
   arbitrary = Track
+    <$> (T.pack <$> arbitrary)
+    <*> (T.pack <$> arbitrary)
+    <*> (T.pack <$> arbitrary)
+    <*> arbitrary
+
+instance Arbitrary a => Arbitrary (Timed a) where
+  arbitrary = Timed
     <$> arbitrary
-    <*> (T.pack <$> arbitrary)
-    <*> (T.pack <$> arbitrary)
-    <*> (T.pack <$> arbitrary)
     <*> arbitrary
     <*> arbitrary
 
@@ -79,7 +83,7 @@ main = do
 
 -- Since 'announce' is sufficiently polymorphic
 -- it's enough to check property on 'Track' only
-announcement_is_id :: Track -> Property
+announcement_is_id :: Timed Track -> Property
 announcement_is_id t = monadicIO $ do
   x <- run $ do
     (et, _) <- stepWire announce 0 t

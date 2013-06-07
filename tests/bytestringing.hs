@@ -26,10 +26,14 @@ import Control.Scrobbler.Types
 
 instance Arbitrary Track where
   arbitrary = Track
+    <$> (T.pack <$> arbitrary)
+    <*> (T.pack <$> arbitrary)
+    <*> (T.pack <$> arbitrary)
+    <*> arbitrary
+
+instance Arbitrary a => Arbitrary (Timed a) where
+  arbitrary = Timed
     <$> arbitrary
-    <*> (T.pack <$> arbitrary)
-    <*> (T.pack <$> arbitrary)
-    <*> (T.pack <$> arbitrary)
     <*> arbitrary
     <*> arbitrary
 
@@ -47,7 +51,7 @@ main = do
   options = defaultConfig { configQuickCheckArgs = stdArgs { maxSuccess = 500 } }
 
 
-serialization_is_id :: Track -> Bool
+serialization_is_id :: Timed Track -> Bool
 serialization_is_id t =
   let (et, _) = stepWireP serialization 0 t
   in case et of
@@ -55,7 +59,7 @@ serialization_is_id t =
     _ -> False
 
 -- serialization/desialization wire
-serialization :: Monad m => Scrobbler m Track Track
+serialization :: Monad m => Scrobbler m (Timed Track) (Timed Track)
 serialization = deserialize . serialize
 
 

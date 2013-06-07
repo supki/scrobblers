@@ -33,6 +33,9 @@ instance Announce a => Announce (PlayerStateChange a) where
   message Stopped     = "* Player is idle"
   message (Started p) = "* Started:\n" <> message p
 
+instance Announce a => Announce (Timed a) where
+  message (Timed { _datum, _local }) = "  at " <> show _local <> "\n" <> message _datum
+
 instance Announce a => Announce (Scrobble a) where
   message (Scrobble p) = "* Scrobble candidate:\n" <> message p
 

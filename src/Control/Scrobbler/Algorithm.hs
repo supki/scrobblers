@@ -8,6 +8,7 @@ import Prelude hiding ((.), id, length)
 import Control.Lens
 import Control.Monad.Trans (MonadIO, liftIO)
 import Control.Wire
+import Data.Default (def)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 
 import Control.Scrobbler.Types
@@ -16,22 +17,25 @@ import Control.Scrobbler.Types
 -- | Check if candidate is ready to be scrobbled
 --
 -- How to scrobble nicely: <http://www.lastfm.ru/api/scrobbling>
-contest :: MonadIO m => Scrobbler m (PlayerStateChange Track) (Scrobble Track)
+contest :: MonadIO m => Scrobbler m (PlayerStateChange Track) (Scrobble (Timed Track))
 contest = contest' . (time' &&& id)
 
-contest' :: MonadIO m => Scrobbler m (Int64, PlayerStateChange Track) (Scrobble Track)
+contest' :: MonadIO m => Scrobbler m (Int64, PlayerStateChange Track) (Scrobble (Timed Track))
 contest' = mkStateM Stopped $ \_dt ((t, ch), tr) -> do
   lt <- round `liftM` liftIO getPOSIXTime
-  return (change (Left NoScrobbles) (go t) tr, ch & mapped . local .~ lt & mapped . start .~ t)
+  return (change (Left NoScrobbles) (go t) tr, ch <&> \tr' -> def
+    & datum .~ tr'
+    & start .~ t
+    & local .~ lt)
  where
   go t tr
     -- If candidate length is less than 30 seconds, we do not scrobble it
-    | tr^.length < 30 = Left NoScrobbles
+    | tr^.datum.length < 30 = Left NoScrobbles
     -- Otherwise, if the time passed since is more than half candidate lenght it's
     -- definitely should be scrobbled
-    | dt > tr^.length `div` 2 = Right . Scrobble . (local +~ dt) $ tr
+    | dt > tr^.datum.length `div` 2 = Right . Scrobble $ tr & local +~ dt
     -- Otherwise, if the passed is more than 4 minutes it's should be scrobbled anyway
-    | dt > 4 * 60 = Right . Scrobble . (local +~ dt) $ tr
+    | dt > 4 * 60 = Right . Scrobble $ tr & local +~ dt
     -- Otherwise there is nothing to scrobble
     | otherwise = Left NoScrobbles
    where

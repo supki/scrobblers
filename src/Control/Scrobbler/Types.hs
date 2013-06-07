@@ -15,8 +15,6 @@ import           Data.Default (Default(..))
 import           Data.Serialize (Serialize(..), getWord8, putWord8)
 import           Data.Text (Text)
 import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
-import qualified Network.Lastfm as L
-
 
 
 -- | Scrobbler type. \"Transforms\" @a@ into @b@ over @m@
@@ -38,51 +36,38 @@ data ScrobblerError
 
 -- | Track information
 data Track = Track
-  { _start  :: !Int64 -- ^ track start relative to scrobbler start time
-  , _title  :: !Text  -- ^ title
+  { _title  :: !Text  -- ^ title
   , _artist :: !Text  -- ^ artist
   , _album  :: !Text  -- ^ album title (optional)
   , _length :: !Int64 -- ^ duration
-  , _local  :: !Int64 -- ^ scrobble timestamp
   } deriving (Show, Read, Eq, Ord)
 
 makeLensesWith ?? ''Track $ defaultRules & generateSignatures .~ False
 
 instance Default Track where
   def = Track
-    { _start  = 0
+    { _title  = ""
     , _artist = ""
-    , _title  = ""
     , _album  = ""
     , _length = 0
-    , _local  = 0
     }
 
 instance Serialize Track where
   put tr = do
-    put (tr^.start)
     put (tr^.title.to encodeUtf8)
     put (tr^.artist.to encodeUtf8)
     put (tr^.album.to encodeUtf8)
     put (tr^.length)
-    put (tr^.local)
   get = do
-    st <- get
     Right ti <- decodeUtf8' <$> get
     Right ar <- decodeUtf8' <$> get
     Right al <- decodeUtf8' <$> get
     le <- get
-    lo <- get
     return $ def
-      & start .~ st
-      & artist .~ ar
       & title .~ ti
+      & artist .~ ar
       & album .~ al
       & length .~ le
-      & local .~ lo
-
--- | Lens to track start time
-start :: Lens' Track Int64
 
 -- | Lens to track title
 title :: Lens' Track Text
@@ -95,9 +80,6 @@ album :: Lens' Track Text
 
 -- | Lens to track length
 length :: Lens' Track Int64
-
--- | Lens to track scrobble timestamp
-local :: Lens' Track Int64
 
 
 -- | Change in 'Player' state
@@ -129,6 +111,42 @@ instance Serialize a => Serialize (PlayerStateChange a) where
     case tag of
       0 -> return Stopped
       _ -> Started <$> get
+
+
+-- | Some data accompanied with timestamps
+data Timed a = Timed
+  { _datum :: !a
+  , _start :: !Int64 -- ^ track start relative to scrobbler start time
+  , _local :: !Int64 -- ^ scrobble timestamp
+  } deriving (Show, Read, Eq, Ord)
+
+makeLensesWith ?? ''Timed $ defaultRules & generateSignatures .~ False
+
+-- | Lens to timed datum
+datum :: Lens' (Timed a) a
+
+-- | Lens to start time
+start :: Lens' (Timed a) Int64
+
+-- | Lens to scrobble timestamp
+local :: Lens' (Timed a) Int64
+
+instance Functor Timed where
+  fmap f t = t { _datum = f (_datum t) }
+
+instance Default a => Default (Timed a) where
+  def = Timed
+    { _datum = def
+    , _start = 0
+    , _local = 0
+    }
+
+instance Serialize a => Serialize (Timed a) where
+  put t = do
+    put (t^.datum)
+    put (t^.start)
+    put (t^.local)
+  get = Timed <$> get <*> get <*> get
 
 
 -- | What to scrobble
