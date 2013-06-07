@@ -122,17 +122,14 @@ data Timed a = Timed
 
 makeLensesWith ?? ''Timed $ defaultRules & generateSignatures .~ False
 
--- | Lens to timed datum
-datum :: Lens' (Timed a) a
-
--- | Lens to start time
-start :: Lens' (Timed a) Int64
-
--- | Lens to scrobble timestamp
-local :: Lens' (Timed a) Int64
-
 instance Functor Timed where
   fmap f t = t { _datum = f (_datum t) }
+
+instance Foldable Timed where
+  foldMap f (Timed a _ _) = f a
+
+instance Traversable Timed where
+  traverse f (Timed a s l) = f a <&> \a' -> Timed a' s l
 
 instance Default a => Default (Timed a) where
   def = Timed
@@ -147,6 +144,15 @@ instance Serialize a => Serialize (Timed a) where
     put (t^.start)
     put (t^.local)
   get = Timed <$> get <*> get <*> get
+
+-- | Lens to timed datum
+datum :: Lens' (Timed a) a
+
+-- | Lens to start time
+start :: Lens' (Timed a) Int64
+
+-- | Lens to scrobble timestamp
+local :: Lens' (Timed a) Int64
 
 
 -- | What to scrobble
