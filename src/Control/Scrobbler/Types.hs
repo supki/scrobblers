@@ -115,7 +115,7 @@ instance Serialize a => Serialize (PlayerStateChange a) where
 
 -- | Some data accompanied with timestamps
 data Timed a = Timed
-  { _datum :: !a
+  { _untimed :: !a
   , _start :: !Int64 -- ^ track start relative to scrobbler start time
   , _local :: !Int64 -- ^ scrobble timestamp
   } deriving (Show, Read, Eq, Ord)
@@ -123,7 +123,7 @@ data Timed a = Timed
 makeLensesWith ?? ''Timed $ defaultRules & generateSignatures .~ False
 
 instance Functor Timed where
-  fmap f t = t { _datum = f (_datum t) }
+  fmap f t = t { _untimed = f (_untimed t) }
 
 instance Foldable Timed where
   foldMap f (Timed a _ _) = f a
@@ -133,20 +133,22 @@ instance Traversable Timed where
 
 instance Default a => Default (Timed a) where
   def = Timed
-    { _datum = def
+    { _untimed = def
     , _start = 0
     , _local = 0
     }
 
 instance Serialize a => Serialize (Timed a) where
   put t = do
-    put (t^.datum)
+    put (t^.untimed)
     put (t^.start)
     put (t^.local)
   get = Timed <$> get <*> get <*> get
 
--- | Lens to timed datum
-datum :: Lens' (Timed a) a
+-- | Lens to untimed datum
+--
+-- might as well be more polymorhic in the cost of worse inference
+untimed :: Lens' (Timed a) a
 
 -- | Lens to start time
 start :: Lens' (Timed a) Int64

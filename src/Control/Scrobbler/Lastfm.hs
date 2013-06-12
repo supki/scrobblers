@@ -45,8 +45,8 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
   go' :: [Timed Track] -> [Track] -> [Timed Track] -> IO ([Track], [Timed Track])
   go' tss@(t:ts) ss fs = do
     r <- try . L.lastfm . L.sign s $ T.scrobble
-      <*> L.artist (t^.datum.artist) <*> L.track (t^.datum.title) <*> L.timestamp (t^.local)
-      <* L.album (t^.datum.album)
+      <*> L.artist (t^.untimed.artist) <*> L.track (t^.untimed.title) <*> L.timestamp (t^.local)
+      <* L.album (t^.untimed.album)
       <*> L.apiKey ak <*> L.sessionKey sk <* L.json
     -- So last.fm request may fail and there is a couple of reasons for it to do so
     case r of
@@ -68,7 +68,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
         -- If we found 'ignored' field in JSON response, we can safely ignore this track
         | dismissed v -> go' ts ss fs
         -- Otherwise everything went fine
-        | otherwise -> go' ts (t^.datum:ss) fs
+        | otherwise -> go' ts (t^.untimed:ss) fs
   go' [] ss fs = return (reverse ss, reverse fs)
 
   server    = maybe False (`elem` [11, 16]) . preview (key "error" . _Number)

@@ -50,7 +50,7 @@ contestWith' :: MonadIO m
 contestWith' f = mkStateM Stopped $ \_dt ((t, ch), tr) -> do
   lt <- round `liftM` liftIO getPOSIXTime
   return (change (Left NoScrobbles) (f t) tr, ch <&> \tr' -> def
-    & datum .~ tr'
+    & untimed .~ tr'
     & start .~ t
     & local .~ lt)
 
@@ -61,10 +61,10 @@ contestWith' f = mkStateM Stopped $ \_dt ((t, ch), tr) -> do
 rules :: Rules
 rules t tr
   -- If candidate length is less than 30 seconds, we do not scrobble it
-  | tr^.datum.length < 30 = Left NoScrobbles
+  | tr^.untimed.length < 30 = Left NoScrobbles
   -- Otherwise, if the time passed since is more than half candidate lenght it's
   -- definitely should be scrobbled
-  | dt > tr^.datum.length `div` 2 = Right . Scrobble $ tr & local +~ dt
+  | dt > tr^.untimed.length `div` 2 = Right . Scrobble $ tr & local +~ dt
   -- Otherwise, if the passed is more than 4 minutes it's should be scrobbled anyway
   | dt > 4 * 60 = Right . Scrobble $ tr & local +~ dt
   -- Otherwise there is nothing to scrobble
