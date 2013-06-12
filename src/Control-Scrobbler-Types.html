@@ -124,7 +124,7 @@
 <a name="line-115"></a>
 <a name="line-116"></a><a name="Timed"></a><span class='hs-comment'>-- | Some data accompanied with timestamps</span>
 <a name="line-117"></a><a name="Timed"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Timed</span>
-<a name="line-118"></a>  <span class='hs-layout'>{</span> <span class='hs-sel'>_datum</span> <span class='hs-keyglyph'>::</span> <span class='hs-varop'>!</span><span class='hs-varid'>a</span>
+<a name="line-118"></a>  <span class='hs-layout'>{</span> <span class='hs-sel'>_untimed</span> <span class='hs-keyglyph'>::</span> <span class='hs-varop'>!</span><span class='hs-varid'>a</span>
 <a name="line-119"></a>  <span class='hs-layout'>,</span> <span class='hs-sel'>_start</span> <span class='hs-keyglyph'>::</span> <span class='hs-varop'>!</span><span class='hs-conid'>Int64</span> <span class='hs-comment'>-- ^ track start relative to scrobbler start time</span>
 <a name="line-120"></a>  <span class='hs-layout'>,</span> <span class='hs-sel'>_local</span> <span class='hs-keyglyph'>::</span> <span class='hs-varop'>!</span><span class='hs-conid'>Int64</span> <span class='hs-comment'>-- ^ scrobble timestamp</span>
 <a name="line-121"></a>  <span class='hs-layout'>}</span> <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>,</span> <span class='hs-conid'>Eq</span><span class='hs-layout'>,</span> <span class='hs-conid'>Ord</span><span class='hs-layout'>)</span>
@@ -132,7 +132,7 @@
 <a name="line-123"></a><a name="makeLensesWith"></a><span class='hs-definition'>makeLensesWith</span> <span class='hs-varop'>??</span> <span class='hs-chr'>'</span><span class='hs-chr'>'</span><span class='hs-conid'>Timed</span> <span class='hs-varop'>$</span> <span class='hs-varid'>defaultRules</span> <span class='hs-varop'>&amp;</span> <span class='hs-varid'>generateSignatures</span> <span class='hs-varop'>.~</span> <span class='hs-conid'>False</span>
 <a name="line-124"></a>
 <a name="line-125"></a><a name="instance%20Functor%20Timed"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Functor</span> <span class='hs-conid'>Timed</span> <span class='hs-keyword'>where</span>
-<a name="line-126"></a>  <span class='hs-varid'>fmap</span> <span class='hs-varid'>f</span> <span class='hs-varid'>t</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>t</span> <span class='hs-layout'>{</span> <span class='hs-sel'>_datum</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-sel'>_datum</span> <span class='hs-varid'>t</span><span class='hs-layout'>)</span> <span class='hs-layout'>}</span>
+<a name="line-126"></a>  <span class='hs-varid'>fmap</span> <span class='hs-varid'>f</span> <span class='hs-varid'>t</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>t</span> <span class='hs-layout'>{</span> <span class='hs-sel'>_untimed</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-sel'>_untimed</span> <span class='hs-varid'>t</span><span class='hs-layout'>)</span> <span class='hs-layout'>}</span>
 <a name="line-127"></a>
 <a name="line-128"></a><a name="instance%20Foldable%20Timed"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Foldable</span> <span class='hs-conid'>Timed</span> <span class='hs-keyword'>where</span>
 <a name="line-129"></a>  <span class='hs-varid'>foldMap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span> <span class='hs-keyword'>_</span> <span class='hs-keyword'>_</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
@@ -142,61 +142,63 @@
 <a name="line-133"></a>
 <a name="line-134"></a><a name="instance%20Default%20(Timed%20a)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Default</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Default</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-135"></a>  <span class='hs-varid'>def</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Timed</span>
-<a name="line-136"></a>    <span class='hs-layout'>{</span> <span class='hs-sel'>_datum</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>def</span>
+<a name="line-136"></a>    <span class='hs-layout'>{</span> <span class='hs-sel'>_untimed</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>def</span>
 <a name="line-137"></a>    <span class='hs-layout'>,</span> <span class='hs-sel'>_start</span> <span class='hs-keyglyph'>=</span> <span class='hs-num'>0</span>
 <a name="line-138"></a>    <span class='hs-layout'>,</span> <span class='hs-sel'>_local</span> <span class='hs-keyglyph'>=</span> <span class='hs-num'>0</span>
 <a name="line-139"></a>    <span class='hs-layout'>}</span>
 <a name="line-140"></a>
 <a name="line-141"></a><a name="instance%20Serialize%20(Timed%20a)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Serialize</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Serialize</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-142"></a>  <span class='hs-varid'>put</span> <span class='hs-varid'>t</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>do</span>
-<a name="line-143"></a>    <span class='hs-varid'>put</span> <span class='hs-layout'>(</span><span class='hs-varid'>t</span><span class='hs-varop'>^.</span><span class='hs-varid'>datum</span><span class='hs-layout'>)</span>
+<a name="line-143"></a>    <span class='hs-varid'>put</span> <span class='hs-layout'>(</span><span class='hs-varid'>t</span><span class='hs-varop'>^.</span><span class='hs-varid'>untimed</span><span class='hs-layout'>)</span>
 <a name="line-144"></a>    <span class='hs-varid'>put</span> <span class='hs-layout'>(</span><span class='hs-varid'>t</span><span class='hs-varop'>^.</span><span class='hs-varid'>start</span><span class='hs-layout'>)</span>
 <a name="line-145"></a>    <span class='hs-varid'>put</span> <span class='hs-layout'>(</span><span class='hs-varid'>t</span><span class='hs-varop'>^.</span><span class='hs-varid'>local</span><span class='hs-layout'>)</span>
 <a name="line-146"></a>  <span class='hs-varid'>get</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Timed</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>get</span> <span class='hs-varop'>&lt;*&gt;</span> <span class='hs-varid'>get</span> <span class='hs-varop'>&lt;*&gt;</span> <span class='hs-varid'>get</span>
 <a name="line-147"></a>
-<a name="line-148"></a><a name="datum"></a><span class='hs-comment'>-- | Lens to timed datum</span>
-<a name="line-149"></a><span class='hs-definition'>datum</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Lens'</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>a</span>
-<a name="line-150"></a>
-<a name="line-151"></a><a name="start"></a><span class='hs-comment'>-- | Lens to start time</span>
-<a name="line-152"></a><span class='hs-definition'>start</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Lens'</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-conid'>Int64</span>
-<a name="line-153"></a>
-<a name="line-154"></a><a name="local"></a><span class='hs-comment'>-- | Lens to scrobble timestamp</span>
-<a name="line-155"></a><span class='hs-definition'>local</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Lens'</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-conid'>Int64</span>
-<a name="line-156"></a>
-<a name="line-157"></a>
-<a name="line-158"></a><a name="Scrobble"></a><span class='hs-comment'>-- | What to scrobble</span>
-<a name="line-159"></a><a name="Scrobble"></a><span class='hs-keyword'>newtype</span> <span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Scrobble</span> <span class='hs-layout'>{</span> <span class='hs-varid'>unScrobble</span> <span class='hs-keyglyph'>::</span> <span class='hs-varid'>a</span> <span class='hs-layout'>}</span>
-<a name="line-160"></a>    <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>)</span>
-<a name="line-161"></a>
-<a name="line-162"></a><a name="instance%20Functor%20Scrobble"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Functor</span> <span class='hs-conid'>Scrobble</span> <span class='hs-keyword'>where</span>
-<a name="line-163"></a>  <span class='hs-varid'>fmap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Scrobble</span> <span class='hs-layout'>(</span><span class='hs-varid'>f</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span>
-<a name="line-164"></a>
-<a name="line-165"></a><a name="instance%20Foldable%20Scrobble"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Foldable</span> <span class='hs-conid'>Scrobble</span> <span class='hs-keyword'>where</span>
-<a name="line-166"></a>  <span class='hs-varid'>foldMap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
-<a name="line-167"></a>
-<a name="line-168"></a><a name="instance%20Traversable%20Scrobble"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Traversable</span> <span class='hs-conid'>Scrobble</span> <span class='hs-keyword'>where</span>
-<a name="line-169"></a>  <span class='hs-varid'>traverse</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Scrobble</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
-<a name="line-170"></a>
-<a name="line-171"></a><a name="instance%20Serialize%20(Scrobble%20a)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Serialize</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Serialize</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-172"></a>  <span class='hs-varid'>put</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>put</span> <span class='hs-varid'>a</span>
-<a name="line-173"></a>  <span class='hs-varid'>get</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Scrobble</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>get</span>
-<a name="line-174"></a>
-<a name="line-175"></a>
-<a name="line-176"></a><a name="Successes"></a><span class='hs-comment'>-- | Successful scrobbles</span>
-<a name="line-177"></a><a name="Successes"></a><span class='hs-keyword'>newtype</span> <span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Successes</span> <span class='hs-layout'>{</span> <span class='hs-varid'>unSuccesses</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-layout'>}</span>
-<a name="line-178"></a>    <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>)</span>
-<a name="line-179"></a>
-<a name="line-180"></a><a name="instance%20Functor%20Successes"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Functor</span> <span class='hs-conid'>Successes</span> <span class='hs-keyword'>where</span>
-<a name="line-181"></a>  <span class='hs-varid'>fmap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Successes</span> <span class='hs-layout'>(</span><span class='hs-varid'>fmap</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span>
-<a name="line-182"></a>
-<a name="line-183"></a><a name="instance%20Foldable%20Successes"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Foldable</span> <span class='hs-conid'>Successes</span> <span class='hs-keyword'>where</span>
-<a name="line-184"></a>  <span class='hs-varid'>foldMap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>foldMap</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
-<a name="line-185"></a>
-<a name="line-186"></a><a name="instance%20Traversable%20Successes"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Traversable</span> <span class='hs-conid'>Successes</span> <span class='hs-keyword'>where</span>
-<a name="line-187"></a>  <span class='hs-varid'>traverse</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Successes</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>traverse</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
-<a name="line-188"></a>
-<a name="line-189"></a><a name="instance%20Serialize%20(Successes%20a)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Serialize</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Serialize</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-190"></a>  <span class='hs-varid'>put</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>put</span> <span class='hs-varid'>a</span>
-<a name="line-191"></a>  <span class='hs-varid'>get</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Successes</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>get</span>
+<a name="line-148"></a><a name="untimed"></a><span class='hs-comment'>-- | Lens to untimed datum</span>
+<a name="line-149"></a><span class='hs-comment'>--</span>
+<a name="line-150"></a><span class='hs-comment'>-- might as well be more polymorhic in the cost of worse inference</span>
+<a name="line-151"></a><span class='hs-definition'>untimed</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Lens'</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>a</span>
+<a name="line-152"></a>
+<a name="line-153"></a><a name="start"></a><span class='hs-comment'>-- | Lens to start time</span>
+<a name="line-154"></a><span class='hs-definition'>start</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Lens'</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-conid'>Int64</span>
+<a name="line-155"></a>
+<a name="line-156"></a><a name="local"></a><span class='hs-comment'>-- | Lens to scrobble timestamp</span>
+<a name="line-157"></a><span class='hs-definition'>local</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Lens'</span> <span class='hs-layout'>(</span><span class='hs-conid'>Timed</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-conid'>Int64</span>
+<a name="line-158"></a>
+<a name="line-159"></a>
+<a name="line-160"></a><a name="Scrobble"></a><span class='hs-comment'>-- | What to scrobble</span>
+<a name="line-161"></a><a name="Scrobble"></a><span class='hs-keyword'>newtype</span> <span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Scrobble</span> <span class='hs-layout'>{</span> <span class='hs-varid'>unScrobble</span> <span class='hs-keyglyph'>::</span> <span class='hs-varid'>a</span> <span class='hs-layout'>}</span>
+<a name="line-162"></a>    <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>)</span>
+<a name="line-163"></a>
+<a name="line-164"></a><a name="instance%20Functor%20Scrobble"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Functor</span> <span class='hs-conid'>Scrobble</span> <span class='hs-keyword'>where</span>
+<a name="line-165"></a>  <span class='hs-varid'>fmap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Scrobble</span> <span class='hs-layout'>(</span><span class='hs-varid'>f</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span>
+<a name="line-166"></a>
+<a name="line-167"></a><a name="instance%20Foldable%20Scrobble"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Foldable</span> <span class='hs-conid'>Scrobble</span> <span class='hs-keyword'>where</span>
+<a name="line-168"></a>  <span class='hs-varid'>foldMap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
+<a name="line-169"></a>
+<a name="line-170"></a><a name="instance%20Traversable%20Scrobble"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Traversable</span> <span class='hs-conid'>Scrobble</span> <span class='hs-keyword'>where</span>
+<a name="line-171"></a>  <span class='hs-varid'>traverse</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Scrobble</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
+<a name="line-172"></a>
+<a name="line-173"></a><a name="instance%20Serialize%20(Scrobble%20a)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Serialize</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Serialize</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-174"></a>  <span class='hs-varid'>put</span> <span class='hs-layout'>(</span><span class='hs-conid'>Scrobble</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>put</span> <span class='hs-varid'>a</span>
+<a name="line-175"></a>  <span class='hs-varid'>get</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Scrobble</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>get</span>
+<a name="line-176"></a>
+<a name="line-177"></a>
+<a name="line-178"></a><a name="Successes"></a><span class='hs-comment'>-- | Successful scrobbles</span>
+<a name="line-179"></a><a name="Successes"></a><span class='hs-keyword'>newtype</span> <span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Successes</span> <span class='hs-layout'>{</span> <span class='hs-varid'>unSuccesses</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-varid'>a</span><span class='hs-keyglyph'>]</span> <span class='hs-layout'>}</span>
+<a name="line-180"></a>    <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Show</span><span class='hs-layout'>,</span> <span class='hs-conid'>Read</span><span class='hs-layout'>)</span>
+<a name="line-181"></a>
+<a name="line-182"></a><a name="instance%20Functor%20Successes"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Functor</span> <span class='hs-conid'>Successes</span> <span class='hs-keyword'>where</span>
+<a name="line-183"></a>  <span class='hs-varid'>fmap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Successes</span> <span class='hs-layout'>(</span><span class='hs-varid'>fmap</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span>
+<a name="line-184"></a>
+<a name="line-185"></a><a name="instance%20Foldable%20Successes"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Foldable</span> <span class='hs-conid'>Successes</span> <span class='hs-keyword'>where</span>
+<a name="line-186"></a>  <span class='hs-varid'>foldMap</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>foldMap</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
+<a name="line-187"></a>
+<a name="line-188"></a><a name="instance%20Traversable%20Successes"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Traversable</span> <span class='hs-conid'>Successes</span> <span class='hs-keyword'>where</span>
+<a name="line-189"></a>  <span class='hs-varid'>traverse</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Successes</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>traverse</span> <span class='hs-varid'>f</span> <span class='hs-varid'>a</span>
+<a name="line-190"></a>
+<a name="line-191"></a><a name="instance%20Serialize%20(Successes%20a)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Serialize</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>Serialize</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-192"></a>  <span class='hs-varid'>put</span> <span class='hs-layout'>(</span><span class='hs-conid'>Successes</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>put</span> <span class='hs-varid'>a</span>
+<a name="line-193"></a>  <span class='hs-varid'>get</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Successes</span> <span class='hs-varop'>&lt;$&gt;</span> <span class='hs-varid'>get</span>
 </pre></body>
 </html>
