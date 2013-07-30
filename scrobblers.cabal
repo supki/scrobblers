@@ -16,53 +16,56 @@ cabal-version:       >= 1.10
 library
   default-language:  Haskell2010
   hs-source-dirs:    src
-  exposed-modules:   Control.Scrobbler
-                     Control.Scrobbler.Main
-                     Control.Scrobbler.Algorithm
-                     Control.Scrobbler.Algorithm.MPD
-                     Control.Scrobbler.Lastfm
-                     Control.Scrobbler.Network
-                     Control.Scrobbler.Announce
-                     Control.Scrobbler.Types
+  exposed-modules:
+    Control.Scrobbler
+    Control.Scrobbler.Main
+    Control.Scrobbler.Algorithm
+    Control.Scrobbler.Algorithm.MPD
+    Control.Scrobbler.Lastfm
+    Control.Scrobbler.Network
+    Control.Scrobbler.Announce
+    Control.Scrobbler.Types
   build-depends:
+    aeson,
     base >= 4 && < 5,
+    bytestring,
+    cereal,
+    cipher-aes128,
     containers,
-    liblastfm >= 0.3,
+    crypto-api,
+    data-default,
     http-conduit,
     http-types,
-    aeson,
-    data-default,
     lens,
     lens-aeson,
+    liblastfm >= 0.3,
     libmpd,
     mtl,
     netwire,
-    bytestring,
-    text,
-    time,
     network,
-    cereal,
-    crypto-api,
-    cipher-aes128
+    semigroups,
+    text,
+    time
 
 test-suite bytestringing
   default-language:  Haskell2010
   build-depends:
     base >= 3 && < 5,
     bytestring,
-    mtl,
-    text,
-    netwire,
-    hspec,
-    QuickCheck,
-    crypto-api,
     cipher-aes128,
-    scrobblers
+    crypto-api,
+    hspec,
+    mtl,
+    netwire,
+    QuickCheck,
+    scrobblers,
+    text
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
   main-is: bytestringing.hs
-  ghc-options: -Wall
-               -fno-warn-unused-do-bind
+  ghc-options:
+    -Wall
+    -fno-warn-unused-do-bind
 
 test-suite behaviours
   default-language:  Haskell2010
@@ -70,15 +73,16 @@ test-suite behaviours
     base >= 3 && < 5,
     bytestring,
     data-default,
-    text,
-    netwire,
-    QuickCheck,
     hspec,
-    network,
     lens,
-    scrobblers
+    netwire,
+    network,
+    QuickCheck,
+    scrobblers,
+    text
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
   main-is: behaviours.hs
-  ghc-options: -Wall
-               -fno-warn-unused-do-bind
+  ghc-options:
+    -Wall
+    -fno-warn-unused-do-bind

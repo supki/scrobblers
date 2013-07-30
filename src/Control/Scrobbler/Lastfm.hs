@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiWayIf #-}
 -- | Lastfm interaction
 module Control.Scrobbler.Lastfm
   ( Credentials(..)
@@ -17,6 +19,9 @@ import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import qualified Data.Aeson as A
 import           Data.ByteString.Lazy (fromStrict)
+import           Data.Foldable (toList)
+import           Data.List.NonEmpty (NonEmpty(..))
+import qualified Data.List.NonEmpty as N
 import           Data.Text (Text)
 import           Network.HTTP.Conduit (HttpException(..))
 import           Network.HTTP.Types
@@ -38,40 +43,52 @@ data Credentials = Credentials
 scrobble :: MonadIO m => Credentials -> Scrobbler m (Scrobble (Timed Track)) (Successes Track)
 scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] $ \_dt -> liftIO . go
  where
-  go (Scrobble ft, ts) = do
-    (ss, fs) <- go' (ft:ts) [] []
-    return (foldr (\_ _ -> Right (Successes ss)) (Left NoScrobbles) ss, fs)
+  -- Retries to scrobble 49 last failures in addition
+  -- to trying to scrobble the new candidate
+  go (Scrobble ft, xs) = do
+    let (ts, ts') = splitAt 49 xs
+    (ss, fs) <- go' (ft:|ts)
+    return (foldr (\_ _ -> Right (Successes ss)) (Left NoScrobbles) ss, fs ++ ts')
 
-  go' :: [Timed Track] -> [Track] -> [Timed Track] -> IO ([Track], [Timed Track])
-  go' tss@(t:ts) ss fs = do
-    r <- try . L.lastfm . L.sign s $ T.scrobble
-          (pure (T.item <*> L.artist (t^.untimed.artist) <*> L.track (t^.untimed.title) <*> L.timestamp (t^.local) <* L.album (t^.untimed.album)))
-      <*> L.apiKey ak <*> L.sessionKey sk <* L.json
+  go' :: NonEmpty (Timed Track) -> IO ([Track], [Timed Track])
+  go' tss = L.sign s
+    (T.scrobble (N.map timedTrackToItem tss) <*> L.apiKey ak <*> L.sessionKey sk <* L.json) &
+    try . L.lastfm <&> \case
     -- So last.fm request may fail and there is a couple of reasons for it to do so
-    case r of
       -- We can catch some exception for http-conduit
       Left (StatusCodeException (Status { statusCode = c }) hs _)
-        -- Status code >= 500 means server error, we hold on our judgement
-        | c >= 500 -> go' ts ss (t:fs)
+        -- Status code >= 500 means server error, we hold our judgement on
+        | c >= 500 -> ([], toList tss)
         -- Otherwise if we have response
-        | Just w <- lookup "Response" hs -> case w of
-            -- Check if it's some server error, we hold on the judgement then
-          _ | server (fromStrict w) -> go' ts ss (t:fs)
-            -- Otherwise it was a client error and we drop the track
-            | otherwise -> go' ts ss fs
+        | Just w <- lookup "Response" hs ->
+          -- Check if it's still some server error, we hold the judgement on
+          if | server (fromStrict w) -> ([], toList tss)
+          -- Otherwise it was a client error and we drop the tracks
+          -- (something really bad happened like broken API wrapper or whatever)
+             | otherwise -> ([], [])
       -- Otherwise we catched some other exception that's some weird failure and we better abort
-      Left _ -> return (reverse ss, tss ++ reverse fs)
+      Left _ -> ([], toList tss)
       -- If we fail to parse JSON that's some kind of connection issue, abort everything
-      Right Nothing -> return (reverse ss, tss ++ reverse fs)
-      Right (Just v)
-        -- If we found 'ignored' field in JSON response, we can safely ignore this track
-        | dismissed v -> go' ts ss fs
-        -- Otherwise everything went fine
-        | otherwise -> go' ts (t^.untimed:ss) fs
-  go' [] ss fs = return (reverse ss, reverse fs)
+      Right Nothing -> ([], toList tss)
+      Right (Just v) -> case ignoredScrobbles v of
+        -- Check if some scrobbles were ignored, if not that's fine
+        [] -> (tss^..folded.untimed, [])
+        -- Otherwise drop ignored
+        is ->
+          ( toList tss^..ifolded.indices (`notElem` is).untimed
+          , toList tss^..ifolded.indices (`elem` is)
+          )
 
   server    = maybe False (`elem` [11, 16]) . preview (key "error" . _Number)
-  dismissed = maybe True (/= "0") . preview (key "scrobbles" . key "@attr" . key "ignored" . _String)
+  ignoredScrobbles resp =
+    resp ^.. (key "scrobbles" . key "scrobble" . _Array . ifolded <. key "ignoredMessage" . key "code" . _String . filtered (/= "0")) . asIndex
+
+  timedTrackToItem :: Timed Track -> L.Request f L.Scrobble
+  timedTrackToItem t = T.item
+    <*> L.artist    (t^.untimed.artist)
+    <*> L.track     (t^.untimed.title)
+    <*> L.timestamp (t^.local)
+    <*  L.album     (t^.untimed.album)
 
 
 -- | Update lastfm user profile page 'now playing' status
