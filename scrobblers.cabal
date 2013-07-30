@@ -27,7 +27,7 @@ library
   build-depends:
     base >= 4 && < 5,
     containers,
-    liblastfm >= 0.2,
+    liblastfm >= 0.3,
     http-conduit,
     http-types,
     aeson,
