@@ -1,6 +1,7 @@
 # scrobblers
 
 [![Build Status](https://travis-ci.org/supki/scrobblers.png)](https://travis-ci.org/supki/scrobblers)
+[![Build Status](https://drone.io/github.com/supki/scrobblers/status.png)](https://drone.io/github.com/supki/scrobblers/latest)
 
 Lastfm scrobblers making library
 
@@ -10,10 +11,10 @@ Lastfm scrobblers making library
 
 From [scrobbling guide][0]
 
-# How does simplest possible scrobbler look like?
+# What the simplest possible scrobbler looks like?
 
 We do not provide `magic ∷ IO ()` to solve any scrobbling problem
-you may encounter, but you can make working scrobbler simply by composing relevant parts:
+you may encounter, but you can make working scrobbler simply by composing the relevant parts:
 
 ```haskell
 import Control.Scrobbler
@@ -21,14 +22,17 @@ import Control.Scrobbler.Algorithm.MPD
 
 main ∷ IO ()
 main = scrobbler $
-  scrobble credentials . contest . updateNowPlaying credentials . candidate
+    scrobble credentials
+  . contest
+  . updateNowPlaying credentials
+  . candidate
 ```
 
-All these parts are actually quite simple, but to explain them, we need to "explain" `Scrobbler`
+Each part does roughly what its name says. But to actually explain this, we need to explain `Scrobbler` first
 
 ## Wait, what's `Scrobbler`?
 
-I'll just quote the relevant parts of definitions:
+I assume you are familiar with [netwire](http://hackage.haskell.org/package/netwire), but if not, there is excerpt from it:
 
 ```haskell
 data Wire e m a b
@@ -37,8 +41,9 @@ data Wire e m a b
 
 type Scrobbler a b = Wire ScrobblerError IO a b
 ```
-I think definitions explain `Scrobbler` fairly well, but if not, you may think of it
-being function `a → IO b` that may "error" and also has some "internal state". So,
+
+So, you can think of `Scrobbler` as of glorified function of type `a → IO b`
+that may "error" and also has some "internal state". So,
 
 ## What are parts our scrobbler is composed of?
 
@@ -50,7 +55,7 @@ newtype Scrobble a       = Scrobble a          -- isomorphic to Identity
 newtype Successes a      = Successes [a]       -- isomorphic to []
 ```
 
-Next, meat of scrobbling, track information:
+Next, the meat of scrobbling, - track information:
 
 ```haskell
 data Track = Track
@@ -63,13 +68,15 @@ data Track = Track
   }
 ```
 
-Okay, we are all set, let's describe `Scrobbler`s:
+Okay, we are all set, let's describe provided `Scrobbler`s:
 
 ### Getting scrobblers candidates
+
 ```haskell
 candidate ∷ Scrobbler Time (PlayerStateChange Track)
 ```
-That wire repeatedly asks player (in our case, that player would be MPD) if its state was changed.
+
+That wire repeatedly asks player (in our example above, that player would be MPD) if its state was changed.
 
 Player may respond with 3 different answers:
 
@@ -77,42 +84,50 @@ Player may respond with 3 different answers:
   2. Yes, I started playing some track
   3. Yes, I stopped playing
 
-We are not interested in answer 1 at all, but we want to know if 2 or 3 happened. That's what `PlayerStateChange` describes
-
 ### Update [last.fm][1] profile status
+
 ```haskell
 updateNowPlaying ∷ Credentials → Scrobbler (PlayerStateChange Track) (PlayerStateChange Track)`
 ```
-That wire notifies [last.fm][1] about changes in player state (only if it worth it:
+
+That wire notifies [last.fm][1] about changes in player state (only if it worths it:
 surely nobody wants to know you stopped playing music) and passes its argument further
 
 ### Test if track is worth scrobbling
+
 ```haskell
 contest ∷ Scrobbler (PlayerStateChange Track) (Scrobble Track)
 ```
-That wire has internal state: previously played track. If player started to playing
-the new one or stopped to play anything, we want to know if that previous track
+
+That wire has internal state: previously played track. If player started
+the new one or stopped, we want to know if that previously played track
 is worth scrobbling. There are 2 choices there:
 
-  1. Yes. So we return previous track
+  1. Yes. So we return the previous track
   2. No. So nothing happens
 
 ### Finally, scrobble track
+
 ```haskell
 scrobble ∷ Credentials → Scrobbler (Scrobble Track) (Successes Track)
 ```
-That wire tries to scrobble incoming `Track` and also all other failed to scrobble
-before tracks (if they exist) and returns the list of successes
+
+That wire tries to scrobble incoming `Track` and also all previous failures (if any)
+Yes, scrobbling may fail for variety of reasons, so we need to store failures for some time.
 
 ## Recap
 
-Now meaning of example scrobbler should be clear: (`scrobbler` is just a main loop)
+Now example scrobbler should be clear: (`scrobbler` is just a kind of main loop)
 
 ```haskell
 main ∷ IO ()
 main = scrobbler $
-  scrobble credentials . contest . updateNowPlaying credentials . candidate
+    scrobble credentials
+  . contest
+  . updateNowPlaying credentials
+  . candidate
 ```
+
 [Casual][2] example is basically this but also with some debug information included.
 
 ## Advanced stuff
@@ -167,7 +182,7 @@ all players. Or something like that
 
     `receive` only cares about `port` part of settings
 
-[Hardcore][3] example demonstrates networking. Also [Client-Server][4] example might be of use
+[Hardcore][3] example demonstrates networking. Also [Client-Server][4] app example might be of use
 
 
  [0]: http://www.last.fm/api/scrobbling
