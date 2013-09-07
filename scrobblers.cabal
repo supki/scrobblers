@@ -2,7 +2,7 @@ name:                scrobblers
 version:             0.1.0.0
 synopsis:            Lastfm scrobblers
 description:
-  Lastfm scrobblers making library
+  Library for making Lastfm scrobblers
   .
   Based on @liblastfm@ and @netwire@ (and other twenty packages)
 license:             BSD3
@@ -11,6 +11,10 @@ author:              Matvey Aksenov
 maintainer:          matvey.aksenov@gmail.com
 category:            Web
 build-type:          Simple
+extra-source-files:
+  README.md
+  examples/Casual.hs
+  examples/Hardcore.hs
 cabal-version:       >= 1.10
 
 library

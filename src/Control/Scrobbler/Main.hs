@@ -6,7 +6,7 @@ module Control.Scrobbler.Main
   ) where
 
 import Control.Concurrent (threadDelay)
-import Control.Monad.Catch
+import Control.Monad.Catch (MonadCatch, catchAll)
 import Control.Monad (forever)
 import Control.Monad.Trans (MonadIO, liftIO)
 import Prelude hiding ((.), id)
@@ -19,17 +19,13 @@ import Control.Scrobbler.Network
 import Control.Scrobbler.Types
 
 
--- | Generic scrobbler function
+-- | Generic scrobbler loop
 --
--- Quite possibly you can just have
+-- Loops forever, ignoring all exceptions (if any)
+-- happening inside the loop
 --
--- @
--- main :: IO ()
--- main = scrobbler $ ...
--- @
---
--- if you don't need advanced features like network interactions
-scrobbler :: (MonadCatch m, MonadIO m) => Scrobbler m () a -> m ()
+-- see @examples/Casual.hs@ for example use
+scrobbler :: (MonadCatch m, MonadIO m) => Scrobbler m () a -> m b
 scrobbler loop = forever $ loop' loop clockSession `catchAll` \_ -> return ()
  where
   loop' w' session' = do
