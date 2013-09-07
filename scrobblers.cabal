@@ -34,6 +34,7 @@ library
     containers,
     crypto-api,
     data-default,
+    exceptions,
     http-conduit,
     http-types,
     lens,

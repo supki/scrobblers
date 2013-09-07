@@ -6,8 +6,8 @@ module Control.Scrobbler.Main
   ) where
 
 import Control.Concurrent (threadDelay)
-import Control.Exception (catch)
-import Control.Monad (forever, void)
+import Control.Monad.Catch
+import Control.Monad (forever)
 import Control.Monad.Trans (MonadIO, liftIO)
 import Prelude hiding ((.), id)
 
@@ -29,10 +29,9 @@ import Control.Scrobbler.Types
 -- @
 --
 -- if you don't need advanced features like network interactions
-scrobbler :: Scrobbler' () a -> IO ()
-scrobbler loop = forever $ void (loop' loop clockSession) `catchAll` \_ -> return ()
+scrobbler :: (MonadCatch m, MonadIO m) => Scrobbler m () a -> m ()
+scrobbler loop = forever $ loop' loop clockSession `catchAll` \_ -> return ()
  where
-  loop' :: MonadIO m => Scrobbler m () a -> Session m -> m ()
   loop' w' session' = do
     (_, w, session) <- stepSession w' session' ()
     liftIO (threadDelay 1000000)
@@ -40,24 +39,23 @@ scrobbler loop = forever $ void (loop' loop clockSession) `catchAll` \_ -> retur
 
 
 -- | Announces successful scrobbles in stdout
-announcer :: Announce t => Scrobbler' () t -> IO ()
+announcer :: (MonadCatch m, MonadIO m) => Announce t => Scrobbler m () t -> m ()
 announcer w = scrobbler (announce . w)
 {-# INLINE announcer #-}
 
 
 -- | Passes data from source to destination
-link :: NetworkSettings -- ^ Source
-     -> NetworkSettings -- ^ Destination
-     -> Scrobbler' ByteString ByteString -> IO ()
+link
+  :: (MonadCatch m, MonadIO m)
+  => NetworkSettings -- ^ Source
+  -> NetworkSettings -- ^ Destination
+  -> Scrobbler m ByteString ByteString -> m ()
 link ns ns' w = scrobbler (send ns' . w . receive ns)
 {-# INLINE link #-}
 
 -- | Alias for 'link'
-(==>) :: NetworkSettings -> NetworkSettings -> Scrobbler' ByteString ByteString -> IO ()
+(==>)
+  :: (MonadCatch m, MonadIO m)
+  => NetworkSettings -> NetworkSettings -> Scrobbler m ByteString ByteString -> m ()
 (==>) = link
 {-# INLINE (==>) #-}
-
-
-catchAll :: IO a -> (SomeException -> IO a) -> IO a
-catchAll = catch
-{-# INLINE catchAll #-}

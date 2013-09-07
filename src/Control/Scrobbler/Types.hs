@@ -20,9 +20,6 @@ import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
 -- | Scrobbler type. \"Transforms\" @a@ into @b@ over @m@
 type Scrobbler m a b = Wire ScrobblerError m a b
 
--- | Specialized 'Scrobbler'
-type Scrobbler' a b = Scrobbler IO a b
-
 
 -- | Scrobbler errors
 data ScrobblerError
