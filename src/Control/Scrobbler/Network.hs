@@ -71,7 +71,10 @@ failures :: Lens' NetworkSettings Failures
 send :: MonadIO m => NetworkSettings -> Scrobbler m ByteString ()
 send ns = mkStateM Q.empty $ \_dt (bs, q) -> liftIO $
   case ns^.failures of
-    Drop     -> (,q) `liftM` single bs
+    Drop     ->
+      (,q) `liftM` single bs
+     `mplus`
+      return (Left NoSend, q)
     Preserve -> queue (q |> bs)
  where
   single bs = do
@@ -79,14 +82,10 @@ send ns = mkStateM Q.empty $ \_dt (bs, q) -> liftIO $
     B.hPut h (B.singleton (fromIntegral (B.length bs)))
     B.hPut h bs
     return (Right ())
-   `mplus`
-    return (Right ())
 
   queue   (viewl ->   EmptyL) = return (Right (), Q.empty)
   queue q@(viewl -> bs :< q') = do
-    h <- connectTo (ns^.host) (ns^.port)
-    B.hPut h (B.singleton (fromIntegral (B.length bs)))
-    B.hPut h bs
+    single bs
     queue q'
    `mplus`
     return (Left NoSend, q)
