@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
+module Main (main) where
 
 import Control.Arrow
 import Control.Category
-import Prelude hiding ((.), id)
-
 import Control.Scrobbler
 import Control.Scrobbler.Algorithm.MPD
 import Data.Serialize (decode)
+import Prelude hiding ((.), id)
 
 import Remote
 
