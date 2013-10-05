@@ -10,10 +10,17 @@ import Data.Serialize (decode)
 
 import Remote
 
+infixr 8 </
+
 
 main :: IO ()
 main = scrobbler $
-    first (send toScrobble . encrypt key . announce . contest)
-  . (announce &&& send toUpdate . encrypt key) . candidate
+    send toScrobble . encrypt key . announce . contest
+  </ (announce &&& send toUpdate . encrypt key) . candidate
  where
   Right key = decode "__KEY__"
+
+
+-- | "I don't care about 'the second' member of the tuple" operator
+(</) :: Arrow arr => arr b c -> arr a (b, d) -> arr a (c, d)
+a </ b = first a . b
