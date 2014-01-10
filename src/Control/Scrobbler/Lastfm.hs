@@ -9,15 +9,11 @@ module Control.Scrobbler.Lastfm
   , scrobble
   ) where
 
-import Control.Exception (try)
-import Control.Monad (liftM, void)
-import Prelude hiding ((.), id, length)
-
 import           Control.Lens
 import           Control.Lens.Aeson
+import           Control.Monad (liftM, void)
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
-import qualified Data.Aeson as A
 import           Data.ByteString.Lazy (fromStrict)
 import           Data.Foldable (toList)
 import           Data.List.NonEmpty (NonEmpty(..))
@@ -27,8 +23,9 @@ import           Network.HTTP.Conduit (HttpException(..))
 import           Network.HTTP.Types
 import qualified Network.Lastfm as L
 import qualified Network.Lastfm.Track as T
+import           Prelude hiding ((.), id, length)
 
-import Control.Scrobbler.Types
+import           Control.Scrobbler.Types
 
 
 -- | Lastfm API credentials
@@ -53,10 +50,10 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
   go' :: NonEmpty (Timed Track) -> IO ([Track], [Timed Track])
   go' tss = L.sign s
     (T.scrobble (N.map timedTrackToItem tss) <*> L.apiKey ak <*> L.sessionKey sk <* L.json) &
-    try . L.lastfm <&> \case
+    L.lastfm <&> \case
     -- So last.fm request may fail and there is a couple of reasons for it to do so
       -- We can catch some exception for http-conduit
-      Left (StatusCodeException (Status { statusCode = c }) hs _)
+      Left (L.LastfmHttpException (StatusCodeException (Status { statusCode = c }) hs _))
         -- Status code >= 500 means server error, we hold our judgement on
         | c >= 500 -> ([], toList tss)
         -- Otherwise if we have response
@@ -68,9 +65,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
              | otherwise -> ([], [])
       -- Otherwise we catched some other exception that's some weird failure and we better abort
       Left _ -> ([], toList tss)
-      -- If we fail to parse JSON that's some kind of connection issue, abort everything
-      Right Nothing -> ([], toList tss)
-      Right (Just v) -> case ignoredScrobbles v of
+      Right v -> case ignoredScrobbles v of
         -- Check if some scrobbles were ignored, if not that's fine
         [] -> (tss^..folded.untimed, [])
         -- Otherwise drop ignored
@@ -81,7 +76,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
 
   server    = maybe False (`elem` [11, 16]) . preview (key "error" . _Number)
   ignoredScrobbles resp =
-    resp ^.. (key "scrobbles" . key "scrobble" . _Array . ifolded <. key "ignoredMessage" . key "code" . _String . filtered (/= "0")) . asIndex
+    resp ^.. (key "scrobbles".key "scrobble"._Array.ifolded<.key "ignoredMessage".key "code"._String.filtered (/= "0")).asIndex
 
   timedTrackToItem :: Timed Track -> L.Request f L.Scrobble
   timedTrackToItem t = T.item
@@ -99,15 +94,6 @@ updateNowPlaying Credentials { secret = s, apiKey = ak, sessionKey = sk } =
  where
   -- We do not care if lastfm request fails, so be it:
   -- User.updateNowPlaying is not essential for scrobbling
-  go Track { _artist = ar, _title = t, _album = al, _length = l } = void . tryLastfm . L.sign s $
+  go Track { _artist = ar, _title = t, _album = al, _length = l } = void . L.lastfm . L.sign s $
     T.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*>
     L.apiKey ak <*> L.sessionKey sk <* L.json
-
-
-tryLastfm :: L.Request L.JSON L.Ready -> IO (Either HttpException A.Value)
-tryLastfm r = do
-  q <- try (L.lastfm r)
-  return $ case q of
-    Right (Just v) -> Right v
-    Right Nothing  -> Left (HttpParserException "aeson")
-    Left e         -> Left e

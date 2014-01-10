@@ -43,7 +43,7 @@ library
     http-types,
     lens,
     lens-aeson,
-    liblastfm >= 0.3,
+    liblastfm >= 0.4,
     libmpd,
     mtl,
     netwire < 5,
