@@ -32,7 +32,7 @@ Each part does roughly what its name says. But to actually explain this, we need
 
 ## Wait, what's `Scrobbler`?
 
-I assume you are familiar with [netwire](http://hackage.haskell.org/package/netwire), but if not, there is excerpt from it:
+I assume you are familiar with [netwire](https://hackage.haskell.org/package/netwire), but if not, there is excerpt from it:
 
 ```haskell
 data Wire e m a b
