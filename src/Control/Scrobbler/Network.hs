@@ -23,9 +23,8 @@ import           Control.Lens
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import           Crypto.Cipher.AES128
-import           Crypto.Classes (BlockCipher(ctr, unCtr))
+import           Crypto.Classes (BlockCipher(ctr, unCtr), getIVIO)
 import           Crypto.Types (IV(..))
-import           Crypto.Modes (getIVIO)
 import           Data.Default (Default(..))
 import           Data.ByteString (ByteString)
 import           Data.Sequence (ViewL(..), viewl)

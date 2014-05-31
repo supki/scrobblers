@@ -36,7 +36,7 @@ library
     cereal,
     cipher-aes128,
     containers,
-    crypto-api,
+    crypto-api >= 0.13,
     data-default,
     exceptions,
     http-conduit,
