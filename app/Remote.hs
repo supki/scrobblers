@@ -5,7 +5,7 @@ module Remote
 
 import Control.Lens
 import Control.Scrobbler
-import Data.Default (def)
+import Data.Default.Class (def)
 import Network
 
 

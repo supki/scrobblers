@@ -1,4 +1,16 @@
 language: haskell
+
+ghc:
+    - 7.8
+    - 7.6
+
+before_install:
+    - git clone https://github.com/supki/liblastfm
+
 install:
- - cabal install  --force-reinstalls --constraint='template-haskell installed'
-script: true
+    - cabal install liblastfm/liblastfm.cabal scrobblers.cabal --constraint='conduit-extra >= 1.1'
+
+script:
+    - cabal install --enable-tests
+    - cabal install examples/
+    - cabal install app/

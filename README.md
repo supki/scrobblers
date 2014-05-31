@@ -1,7 +1,6 @@
 # scrobblers
 
 [![Build Status](https://travis-ci.org/supki/scrobblers.png)](https://travis-ci.org/supki/scrobblers)
-[![Build Status](https://drone.io/github.com/supki/scrobblers/status.png)](https://drone.io/github.com/supki/scrobblers/latest)
 
 Lastfm scrobblers making library
 

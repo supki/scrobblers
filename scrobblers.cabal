@@ -44,7 +44,7 @@ library
     , http-types
     , lens               >= 4.0.1
     , liblastfm          >= 0.4
-    , libmpd
+    , libmpd             >= 0.8
     , mtl
     , netwire            >= 5
     , network

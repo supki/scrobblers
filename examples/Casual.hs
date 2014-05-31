@@ -1,10 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Category
-import Prelude hiding ((.), id)
-
-import Control.Scrobbler
-import Control.Scrobbler.Algorithm.MPD
+import Control.Category                -- base
+import Control.Scrobbler               -- scrobblers
+import Control.Scrobbler.Algorithm.MPD -- scrobblers
+import Prelude hiding ((.), id)        -- base
 
 
 -- Simple scrobbler without fancy stuff
@@ -20,7 +19,6 @@ main = scrobbler $
   announce . updateNowPlaying credentials .
   -- Get scrobble candidate from player of choice (MPD here)
   candidate
-
 
 -- Lastfm credentials. Easy to get with "liblastfm"
 credentials :: Credentials

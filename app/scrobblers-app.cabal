@@ -20,7 +20,7 @@ executable scrobbler-server
     , bytestring
     , cereal
     , crypto-api
-    , data-default
+    , data-default-class
     , network
     , lens
     , scrobblers
@@ -34,7 +34,7 @@ executable scrobbler-client
     , bytestring
     , cereal
     , crypto-api
-    , data-default
+    , data-default-class
     , network
     , lens
     , scrobblers
