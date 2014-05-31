@@ -53,7 +53,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
     L.lastfm <&> \case
     -- So last.fm request may fail and there is a couple of reasons for it to do so
       -- We can catch some exception for http-conduit
-      Left (L.LastfmHttpException (StatusCodeException (Status { statusCode = c }) hs _))
+      Left (L.LastfmHttpError (StatusCodeException (Status { statusCode = c }) hs _))
         -- Status code >= 500 means server error, we hold our judgement on
         | c >= 500 -> ([], toList tss)
         -- Otherwise if we have response
