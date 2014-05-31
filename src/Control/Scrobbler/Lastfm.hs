@@ -37,7 +37,7 @@ data Credentials = Credentials
 
 
 -- | Scrobble track
-scrobble :: MonadIO m => Credentials -> Scrobbler m (Scrobble (Timed Track)) (Successes Track)
+scrobble :: MonadIO m => Credentials -> Scrobbler m (Scrobble (Stamped Track)) (Successes Track)
 scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] $ \_dt -> liftIO . go
  where
   -- Retries to scrobble 49 last failures in addition
@@ -47,7 +47,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
     (ss, fs) <- go' (ft:|ts)
     return (foldr (\_ _ -> Right (Successes ss)) (Left NoScrobbles) ss, fs ++ ts')
 
-  go' :: NonEmpty (Timed Track) -> IO ([Track], [Timed Track])
+  go' :: NonEmpty (Stamped Track) -> IO ([Track], [Stamped Track])
   go' tss = L.sign s
     (T.scrobble (N.map timedTrackToItem tss) <*> L.apiKey ak <*> L.sessionKey sk <* L.json) &
     L.lastfm <&> \case
@@ -78,7 +78,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
   ignoredScrobbles resp =
     resp ^.. (key "scrobbles".key "scrobble"._Array.ifolded<.key "ignoredMessage".key "code"._String.filtered (/= "0")).asIndex
 
-  timedTrackToItem :: Timed Track -> L.Request f L.Scrobble
+  timedTrackToItem :: Stamped Track -> L.Request f L.Scrobble
   timedTrackToItem t = T.item
     <*> L.artist    (t^.untimed.artist)
     <*> L.track     (t^.untimed.title)

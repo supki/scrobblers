@@ -30,23 +30,23 @@ import Control.Scrobbler.Types
 -- Result is either some scrobbler failure (most probably 'NoScrobble') or scrobbled track
 --
 -- Note: users should update '_local' themselves
-type Rules = Int64 -> Timed Track -> Either ScrobblerError (Scrobble (Timed Track))
+type Rules = Int64 -> Stamped Track -> Either ScrobblerError (Scrobble (Stamped Track))
 
 
 -- | Check if candidate is ready to be scrobbled with default 'rules'
 contest :: MonadIO m
-        => Scrobbler m (PlayerStateChange Track) (Scrobble (Timed Track))
+        => Scrobbler m (PlayerStateChange Track) (Scrobble (Stamped Track))
 contest = contestWith rules
 
 -- | Check if candidate is ready to be scrobbled with custom rules
 contestWith :: MonadIO m
             => Rules
-            -> Scrobbler m (PlayerStateChange Track) (Scrobble (Timed Track))
+            -> Scrobbler m (PlayerStateChange Track) (Scrobble (Stamped Track))
 contestWith f = contestWith' f . (time' &&& id)
 
 contestWith' :: MonadIO m
              => Rules
-             -> Scrobbler m (Int64, PlayerStateChange Track) (Scrobble (Timed Track))
+             -> Scrobbler m (Int64, PlayerStateChange Track) (Scrobble (Stamped Track))
 contestWith' f = mkStateM Stopped $ \_dt ((t, ch), tr) -> do
   lt <- round `liftM` liftIO getPOSIXTime
   return (change (Left NoScrobbles) (f t) tr, ch <&> \tr' -> def
