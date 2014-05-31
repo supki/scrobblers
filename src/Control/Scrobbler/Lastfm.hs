@@ -25,6 +25,7 @@ import qualified Network.Lastfm as L
 import qualified Network.Lastfm.Track as T
 import           Prelude hiding ((.), id, length)
 
+import           Control.Scrobbler.Netwire (mkStateM, mkFixM)
 import           Control.Scrobbler.Types
 
 

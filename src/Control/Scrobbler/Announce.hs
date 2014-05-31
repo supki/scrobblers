@@ -8,7 +8,6 @@ module Control.Scrobbler.Announce
   ) where
 
 import Data.List (intercalate)
-import Data.Monoid ((<>))
 import Prelude hiding ((.), id)
 
 import           Control.Monad.Trans (MonadIO, liftIO)
@@ -17,6 +16,7 @@ import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.Text as T
 
+import Control.Scrobbler.Netwire (mkFixM)
 import Control.Scrobbler.Types
 
 
@@ -52,5 +52,5 @@ pprint = liftIO . putStrLn . message
 
 
 -- | 'Announce'ment 'Wire'. Propagates input
-announce :: (MonadIO m, Announce a) => Wire e m a a
+announce :: (MonadIO m, Monoid t, Announce a) => Wire t e m a a
 announce = mkFixM $ \_dt p -> pprint p >> return (Right p)

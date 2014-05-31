@@ -16,6 +16,7 @@ import           Data.Text (Text)
 import qualified Network.MPD as Y
 
 import Control.Scrobbler.Algorithm
+import Control.Scrobbler.Netwire (mkStateM)
 import Control.Scrobbler.Types
 
 

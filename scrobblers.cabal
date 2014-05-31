@@ -46,7 +46,7 @@ library
     liblastfm >= 0.4,
     libmpd,
     mtl,
-    netwire < 5,
+    netwire >= 5,
     network,
     semigroups,
     text,

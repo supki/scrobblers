@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- | Scrobbling algorithm routines
 module Control.Scrobbler.Algorithm
   ( -- * Contesters
@@ -18,6 +19,7 @@ import Control.Wire
 import Data.Default (def)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 
+import Control.Scrobbler.Netwire (mkStateM)
 import Control.Scrobbler.Types
 
 
@@ -79,5 +81,5 @@ change b _           _ = b
 
 
 -- | Rounded time. Somehow useful
-time' :: Monad m => Wire e m a Int64
+time' :: Monad m => Wire (Timed NominalDiffTime ()) e m a Int64
 time' = round <$> time

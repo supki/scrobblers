@@ -25,24 +25,25 @@ import Control.Scrobbler.Types
 -- happening inside the loop
 --
 -- see @examples/Casual.hs@ for example use
-scrobbler :: (MonadCatch m, MonadIO m) => Scrobbler m () a -> m b
-scrobbler loop = forever $ loop' loop clockSession `catchAll` \_ -> return ()
+scrobbler :: (Applicative m, MonadCatch m, MonadIO m) => Scrobbler m () a -> m b
+scrobbler loop = forever $ loop' loop clockSession_ `catchAll` \_ -> return ()
  where
-  loop' w' session' = do
-    (_, w, session) <- stepSession w' session' ()
+  loop' w' s' = do
+    (dt, s'') <- stepSession s'
+    (_,  w'') <- stepWire w' dt (Right ())
     liftIO (threadDelay 1000000)
-    loop' w session
+    loop' w'' s''
 
 
 -- | Announces successful scrobbles in stdout
-announcer :: (MonadCatch m, MonadIO m) => Announce t => Scrobbler m () t -> m ()
+announcer :: (Applicative m, MonadCatch m, MonadIO m) => Announce t => Scrobbler m () t -> m ()
 announcer w = scrobbler (announce . w)
 {-# INLINE announcer #-}
 
 
 -- | Passes data from source to destination
 link
-  :: (MonadCatch m, MonadIO m)
+  :: (Applicative m, MonadCatch m, MonadIO m)
   => NetworkSettings -- ^ Source
   -> NetworkSettings -- ^ Destination
   -> Scrobbler m ByteString ByteString -> m ()
@@ -51,7 +52,7 @@ link ns ns' w = scrobbler (send ns' . w . receive ns)
 
 -- | Alias for 'link'
 (==>)
-  :: (MonadCatch m, MonadIO m)
+  :: (Applicative m, MonadCatch m, MonadIO m)
   => NetworkSettings -> NetworkSettings -> Scrobbler m ByteString ByteString -> m ()
 (==>) = link
 {-# INLINE (==>) #-}

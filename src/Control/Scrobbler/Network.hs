@@ -34,6 +34,7 @@ import           Network
 import qualified Data.ByteString as B
 
 import Control.Scrobbler.Types
+import Control.Scrobbler.Netwire (mkStateM, mkFix)
 
 
 -- | Networking settings. Used in 'send' and 'receive'

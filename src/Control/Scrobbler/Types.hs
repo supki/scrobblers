@@ -10,7 +10,7 @@ import Data.Monoid (mempty)
 import Prelude hiding (length)
 
 import           Control.Lens
-import           Control.Wire (Wire)
+import           Control.Wire (Wire, Timed, NominalDiffTime)
 import           Data.Default (Default(..))
 import           Data.Serialize (Serialize(..), getWord8, putWord8)
 import           Data.Text (Text)
@@ -18,7 +18,7 @@ import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
 
 
 -- | Scrobbler type. \"Transforms\" @a@ into @b@ over @m@
-type Scrobbler m a b = Wire ScrobblerError m a b
+type Scrobbler m a b = Wire (Timed NominalDiffTime ()) ScrobblerError m a b
 
 
 -- | Scrobbler errors
