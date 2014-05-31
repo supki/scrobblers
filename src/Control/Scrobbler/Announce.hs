@@ -7,17 +7,16 @@ module Control.Scrobbler.Announce
   , announce
   ) where
 
-import Data.List (intercalate)
-import Prelude hiding ((.), id)
-
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import           Data.List (intercalate)
 import qualified Data.Text as T
+import           Prelude hiding ((.), id)
 
-import Control.Scrobbler.Netwire (mkFixM)
-import Control.Scrobbler.Types
+import           Control.Scrobbler.Netwire (mkFixM)
+import           Control.Scrobbler.Types
 
 
 -- | Class of things that can be announced, like

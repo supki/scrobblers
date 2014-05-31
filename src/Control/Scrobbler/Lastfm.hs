@@ -36,7 +36,6 @@ data Credentials = Credentials
   , secret     :: !L.Secret
   } deriving (Show)
 
-
 -- | Scrobble track
 scrobble :: MonadIO m => Credentials -> Scrobbler m (Scrobble (Stamped Track)) (Successes Track)
 scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] $ \_dt -> liftIO . go
@@ -85,7 +84,6 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
     <*> L.track     (t^.untimed.title)
     <*> L.timestamp (t^.local)
     <*  L.album     (t^.untimed.album)
-
 
 -- | Update lastfm user profile page 'now playing' status
 updateNowPlaying :: MonadIO m

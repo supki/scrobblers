@@ -4,22 +4,20 @@
 module Control.Scrobbler.Types where
 
 import Control.Applicative (Applicative(..), (<$>))
+import Control.Lens
+import Control.Wire (Wire, Timed, NominalDiffTime)
+import Data.Default (Default(..))
 import Data.Foldable (Foldable(..))
 import Data.Int (Int64)
 import Data.Monoid (mempty)
+import Data.Serialize (Serialize(..), getWord8, putWord8)
+import Data.Text (Text)
+import Data.Text.Encoding (decodeUtf8', encodeUtf8)
 import Prelude hiding (length)
-
-import           Control.Lens
-import           Control.Wire (Wire, Timed, NominalDiffTime)
-import           Data.Default (Default(..))
-import           Data.Serialize (Serialize(..), getWord8, putWord8)
-import           Data.Text (Text)
-import           Data.Text.Encoding (decodeUtf8', encodeUtf8)
 
 
 -- | Scrobbler type. \"Transforms\" @a@ into @b@ over @m@
 type Scrobbler m a b = Wire (Timed NominalDiffTime ()) ScrobblerError m a b
-
 
 -- | Scrobbler errors
 data ScrobblerError
@@ -29,7 +27,6 @@ data ScrobblerError
   | NoSend
   | NoReceive
     deriving (Show, Read, Eq, Ord)
-
 
 -- | Track information
 data Track = Track
@@ -78,7 +75,6 @@ album :: Lens' Track Text
 -- | Lens to track length
 length :: Lens' Track Int64
 
-
 -- | Change in 'Player' state
 --
 --
@@ -108,7 +104,6 @@ instance Serialize a => Serialize (PlayerStateChange a) where
     case tag of
       0 -> return Stopped
       _ -> Started <$> get
-
 
 -- | Some data accompanied with timestamps
 data Stamped a = Stamped
@@ -153,7 +148,6 @@ start :: Lens' (Stamped a) Int64
 -- | Lens to scrobble timestamp
 local :: Lens' (Stamped a) Int64
 
-
 -- | What to scrobble
 newtype Scrobble a = Scrobble { unScrobble :: a }
     deriving (Show, Read)
@@ -170,7 +164,6 @@ instance Traversable Scrobble where
 instance Serialize a => Serialize (Scrobble a) where
   put (Scrobble a) = put a
   get = Scrobble <$> get
-
 
 -- | Successful scrobbles
 newtype Successes a = Successes { unSuccesses :: [a] }

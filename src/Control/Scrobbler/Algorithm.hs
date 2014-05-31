@@ -9,15 +9,14 @@ module Control.Scrobbler.Algorithm
   , time'
   ) where
 
-import Control.Monad (liftM)
-import Data.Int (Int64)
-import Prelude hiding ((.), id, length)
-
 import Control.Lens
+import Control.Monad (liftM)
 import Control.Monad.Trans (MonadIO, liftIO)
 import Control.Wire
 import Data.Default (def)
+import Data.Int (Int64)
 import Data.Time.Clock.POSIX (getPOSIXTime)
+import Prelude hiding ((.), id, length)
 
 import Control.Scrobbler.Netwire (mkStateM)
 import Control.Scrobbler.Types
@@ -33,7 +32,6 @@ import Control.Scrobbler.Types
 --
 -- Note: users should update '_local' themselves
 type Rules = Int64 -> Stamped Track -> Either ScrobblerError (Scrobble (Stamped Track))
-
 
 -- | Check if candidate is ready to be scrobbled with default 'rules'
 contest :: MonadIO m
@@ -56,7 +54,6 @@ contestWith' f = mkStateM Stopped $ \_dt ((t, ch), tr) -> do
     & start .~ t
     & local .~ lt)
 
-
 -- | Default rules for scrobbling
 --
 -- Reference: <http://www.lastfm.ru/api/scrobbling>
@@ -74,11 +71,9 @@ rules t tr
  where
   dt = t - tr^.start
 
-
 change :: b -> (a -> b) -> PlayerStateChange a -> b
 change _ f (Started a) = f a
 change b _           _ = b
-
 
 -- | Rounded time. Somehow useful
 time' :: Monad m => Wire (Timed NominalDiffTime ()) e m a Int64

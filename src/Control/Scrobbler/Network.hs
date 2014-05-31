@@ -15,11 +15,8 @@ module Control.Scrobbler.Network
   , decrypt, decrypt', deserialize
   ) where
 
-import Control.Monad (liftM, mplus)
-import Prelude hiding ((.), id)
-import System.Timeout (timeout)
-
 import           Control.Lens
+import           Control.Monad (liftM, mplus)
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import           Crypto.Cipher.AES128
@@ -27,14 +24,16 @@ import           Crypto.Classes (getIVIO)
 import           Crypto.Types (IV(..))
 import           Data.Default (Default(..))
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import           Data.Sequence (ViewL(..), viewl)
 import qualified Data.Sequence as Q
 import           Data.Serialize (Serialize, decode, encode)
 import           Network
-import qualified Data.ByteString as B
+import           Prelude hiding ((.), id)
+import           System.Timeout (timeout)
 
-import Control.Scrobbler.Types
-import Control.Scrobbler.Netwire (mkStateM, mkFix)
+import           Control.Scrobbler.Types
+import           Control.Scrobbler.Netwire (mkStateM, mkFix)
 
 
 -- | Networking settings. Used in 'send' and 'receive'
@@ -66,7 +65,6 @@ port :: Lens' NetworkSettings PortID
 -- | Lens to network failures policy
 failures :: Lens' NetworkSettings Failures
 
-
 -- | Send serialized 'Track' over the wire
 send :: MonadIO m => NetworkSettings -> Scrobbler m ByteString ()
 send ns = mkStateM Q.empty $ \_dt (bs, q) -> liftIO $
@@ -91,7 +89,6 @@ send ns = mkStateM Q.empty $ \_dt (bs, q) -> liftIO $
     return (Left NoSend, q)
   queue q = return (Left NoSend, q)
 
-
 -- | Receive 'Track' over the wire
 receive :: MonadIO m => NetworkSettings -> Scrobbler m () ByteString
 receive ns = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
@@ -106,7 +103,6 @@ receive ns = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
  `mplus`
   return (Left NoReceive, Nothing)
 
-
 -- | Encrypt 'Track' with AES-CTR 'Wire'
 encrypt :: (Serialize b, MonadIO m) => AESKey128 -> Scrobbler m b ByteString
 encrypt k = encrypt' k . serialize
@@ -117,7 +113,6 @@ encrypt' k = mkStateM Nothing $ \_dt (bs, s) -> do
   IV iv <- maybe (liftIO getIVIO) return s
   let (bs', iv') = ctr k (IV iv) bs
   return (Right (iv `B.append` bs'), Just iv')
-
 
 -- | Decrypt 'Track' with AES-CTR 'Wire'
 decrypt :: (Serialize b, Monad m) => AESKey128 -> Scrobbler m ByteString b
@@ -130,11 +125,9 @@ decrypt' k = mkFix $ \_dt bs ->
       (bs'', _) = unCtr k (IV iv) bs'
   in Right bs''
 
-
 -- | 'Serialize' datum for network transmission
 serialize :: (Serialize a, Monad m) => Scrobbler m a ByteString
 serialize = arr encode
-
 
 -- | De'Serialize' datum after network transmission
 deserialize :: (Serialize b, Monad m) => Scrobbler m ByteString b
