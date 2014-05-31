@@ -6,7 +6,7 @@ module Control.Scrobbler.Algorithm.MPD
 import           Control.Lens
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
-import           Data.Default (def)
+import           Data.Default.Class (def)
 import           Data.Int (Int64)
 import           Data.Map (Map)
 import           Data.Text (Text)

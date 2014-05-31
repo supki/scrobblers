@@ -6,7 +6,7 @@ module Control.Scrobbler.Types where
 import Control.Applicative (Applicative(..), (<$>))
 import Control.Lens
 import Control.Wire (Wire, Timed, NominalDiffTime)
-import Data.Default (Default(..))
+import Data.Default.Class (Default(..))
 import Data.Foldable (Foldable(..))
 import Data.Int (Int64)
 import Data.Monoid (mempty)

@@ -22,7 +22,7 @@ import           Control.Wire
 import           Crypto.Cipher.AES128
 import           Crypto.Classes (getIVIO)
 import           Crypto.Types (IV(..))
-import           Data.Default (Default(..))
+import           Data.Default.Class (Default(..))
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           Data.Sequence (ViewL(..), viewl)

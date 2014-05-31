@@ -13,7 +13,7 @@ import Control.Lens
 import Control.Monad (liftM)
 import Control.Monad.Trans (MonadIO, liftIO)
 import Control.Wire
-import Data.Default (def)
+import Data.Default.Class (def)
 import Data.Int (Int64)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import Prelude hiding ((.), id, length)
