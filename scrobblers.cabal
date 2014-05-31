@@ -34,7 +34,7 @@ library
     base >= 4 && < 5,
     bytestring,
     cereal,
-    cipher-aes128,
+    cipher-aes128 >= 0.6,
     containers,
     crypto-api >= 0.13,
     data-default,

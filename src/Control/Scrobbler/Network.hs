@@ -23,7 +23,7 @@ import           Control.Lens
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
 import           Crypto.Cipher.AES128
-import           Crypto.Classes (BlockCipher(ctr, unCtr), getIVIO)
+import           Crypto.Classes (getIVIO)
 import           Crypto.Types (IV(..))
 import           Data.Default (Default(..))
 import           Data.ByteString (ByteString)
@@ -107,11 +107,11 @@ receive ns = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
 
 
 -- | Encrypt 'Track' with AES-CTR 'Wire'
-encrypt :: (Serialize b, MonadIO m) => AESKey -> Scrobbler m b ByteString
+encrypt :: (Serialize b, MonadIO m) => AESKey128 -> Scrobbler m b ByteString
 encrypt k = encrypt' k . serialize
 
 -- | Encrypt 'ByteString' with AES-CTR 'Wire'
-encrypt' :: MonadIO m => AESKey -> Scrobbler m ByteString ByteString
+encrypt' :: MonadIO m => AESKey128 -> Scrobbler m ByteString ByteString
 encrypt' k = mkStateM Nothing $ \_dt (bs, s) -> do
   IV iv <- maybe (liftIO getIVIO) return s
   let (bs', iv') = ctr k (IV iv) bs
@@ -119,11 +119,11 @@ encrypt' k = mkStateM Nothing $ \_dt (bs, s) -> do
 
 
 -- | Decrypt 'Track' with AES-CTR 'Wire'
-decrypt :: (Serialize b, Monad m) => AESKey -> Scrobbler m ByteString b
+decrypt :: (Serialize b, Monad m) => AESKey128 -> Scrobbler m ByteString b
 decrypt k = deserialize . decrypt' k
 
 -- | Decrypt 'ByteString' with AES-CTR 'Wire'
-decrypt' :: Monad m => AESKey -> Scrobbler m ByteString ByteString
+decrypt' :: Monad m => AESKey128 -> Scrobbler m ByteString ByteString
 decrypt' k = mkFix $ \_dt bs ->
   let (iv, bs') = B.splitAt 16 bs
       (bs'', _) = unCtr k (IV iv) bs'
