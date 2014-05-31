@@ -3,29 +3,29 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 module Main where
 
-import Control.Concurrent (forkIO, threadDelay)
-import Control.Concurrent.MVar
-import Control.Monad (unless)
-import Prelude hiding ((.), id)
-import System.Exit (exitFailure)
-import System.Timeout (timeout)
-
+import           Control.Concurrent (forkIO, threadDelay)
+import           Control.Concurrent.MVar
 import           Control.Lens
+import           Control.Monad (unless)
 import           Control.Wire hiding (unless)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import           Data.Default (def)
+import           Data.Default.Class (def)
 import qualified Data.Text as T
 import           Network
+import           Prelude hiding ((.), id)
+import           System.Exit (exitFailure)
+import           System.Timeout (timeout)
 import           Test.Hspec
 import           Test.Hspec.Runner
 import           Test.Hspec.QuickCheck
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 
-import Control.Scrobbler.Announce
-import Control.Scrobbler.Network
-import Control.Scrobbler.Types
+import           Control.Scrobbler.Announce
+import           Control.Scrobbler.Netwire (mkFixM)
+import           Control.Scrobbler.Network
+import           Control.Scrobbler.Types
 
 
 instance Arbitrary Track where
@@ -35,8 +35,8 @@ instance Arbitrary Track where
     <*> (T.pack <$> arbitrary)
     <*> arbitrary
 
-instance Arbitrary a => Arbitrary (Timed a) where
-  arbitrary = Timed
+instance Arbitrary a => Arbitrary (Stamped a) where
+  arbitrary = Stamped
     <$> arbitrary
     <*> arbitrary
     <*> arbitrary
@@ -51,49 +51,48 @@ main = do
     describe "communication" $ do
       it "correctly maintains the queue of failures" $ do
         let ds = ["AAAA", "BBBB", "CCCC", "DDDD"]
-        (_, w) <- stepWire (send (def & port .~ PortNumber 4567)) 0 "AAAA"
-        (_, w) <- stepWire w 0 "BBBB"
-        (_, w) <- stepWire w 0 "CCCC"
+        (_, w) <- stepWire (send (def & port .~ PortNumber 4567)) mempty (Right "AAAA")
+        (_, w) <- stepWire w mempty (Right "BBBB")
+        (_, w) <- stepWire w mempty (Right "CCCC")
         forkIO $ do
-          (r, _) <- stepWire (receiver (PortNumber 4567)) 0 ()
+          (r, _) <- stepWire (receiver (PortNumber 4567)) mempty (Right ())
           case r of
             Right rs -> putMVar b rs
             Left  _  -> return ()
         threadDelay 100000
-        (_, _) <- stepWire w 0 "DDDD"
+        (_, _) <- stepWire w mempty (Right "DDDD")
         ds' <- takeMVar b
         ds' `shouldBe` ds
       it "correctly does not maintain the queue of failures" $ do
         let ds = ["DDDD"]
-        (_, w) <- stepWire (send (def & port .~ PortNumber 4568 & failures .~ Drop)) 0 "AAAA"
-        (_, w) <- stepWire w 0 "BBBB"
-        (_, w) <- stepWire w 0 "CCCC"
+        (_, w) <- stepWire (send (def & port .~ PortNumber 4568 & failures .~ Drop)) mempty (Right "AAAA")
+        (_, w) <- stepWire w mempty (Right "BBBB")
+        (_, w) <- stepWire w mempty (Right "CCCC")
         forkIO $ do
-          (r, _) <- stepWire (receiver (PortNumber 4568)) 0 ()
+          (r, _) <- stepWire (receiver (PortNumber 4568)) mempty (Right ())
           case r of
             Right rs -> putMVar b rs
             Left  _  -> return ()
         threadDelay 100000
-        (_, _) <- stepWire w 0 "DDDD"
+        (_, _) <- stepWire w mempty (Right "DDDD")
         ds' <- takeMVar b
         ds' `shouldBe` ds
   unless (summaryFailures r == 0) exitFailure
  where
-  options = defaultConfig { configQuickCheckArgs = stdArgs { maxSuccess = 500 } }
+  options = defaultConfig { configQuickCheckMaxSuccess = Just 500 }
 
 -- Since 'announce' is sufficiently polymorphic
 -- it's enough to check property on 'Track' only
-announcement_is_id :: Timed Track -> Property
+announcement_is_id :: Stamped Track -> Property
 announcement_is_id t = monadicIO $ do
   x <- run $ do
-    (et, _) <- stepWire announce 0 t
+    (et, _) <- stepWire announce mempty (Right t)
     return $ case et of
       Right t' -> t == t'
       _ -> False
   assert x
 
-
-receiver :: PortID -> Wire e IO () [ByteString]
+receiver :: PortID -> Wire (Timed NominalDiffTime ()) e IO () [ByteString]
 receiver pid = mkFixM $ \_dt () -> do
   s <- listenOn pid
   xs <- go s

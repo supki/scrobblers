@@ -51,5 +51,5 @@ pprint = liftIO . putStrLn . message
 
 
 -- | 'Announce'ment 'Wire'. Propagates input
-announce :: (MonadIO m, Monoid t, Announce a) => Wire t e m a a
+announce :: (MonadIO m, Announce a) => Wire (Timed NominalDiffTime ()) e m a a
 announce = mkFixM $ \_dt p -> pprint p >> return (Right p)
