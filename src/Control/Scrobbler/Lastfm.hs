@@ -10,10 +10,10 @@ module Control.Scrobbler.Lastfm
   ) where
 
 import           Control.Lens
-import           Control.Lens.Aeson
 import           Control.Monad (liftM, void)
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
+import           Data.Aeson.Lens
 import           Data.ByteString.Lazy (fromStrict)
 import           Data.Foldable (toList)
 import           Data.List.NonEmpty (NonEmpty(..))
