@@ -36,7 +36,7 @@ data Track = Track
   , _length :: !Int64 -- ^ duration
   } deriving (Show, Read, Eq, Ord)
 
-makeLensesWith ?? ''Track $ defaultRules & generateSignatures .~ False
+makeLensesWith ?? ''Track $ lensRules & generateSignatures .~ False
 
 instance Default Track where
   def = Track
@@ -112,7 +112,7 @@ data Stamped a = Stamped
   , _local :: !Int64 -- ^ scrobble timestamp
   } deriving (Show, Read, Eq, Ord)
 
-makeLensesWith ?? ''Stamped $ defaultRules & generateSignatures .~ False
+makeLensesWith ?? ''Stamped $ lensRules & generateSignatures .~ False
 
 instance Functor Stamped where
   fmap f t = t { _untimed = f (_untimed t) }

@@ -39,10 +39,11 @@ library
     , containers
     , crypto-api         >= 0.13
     , data-default-class
+    , lens-aeson         >= 1
     , exceptions
     , http-conduit
     , http-types
-    , lens               >= 4.0.1
+    , lens               >= 4.4
     , liblastfm          >= 0.4
     , libmpd             >= 0.8
     , mtl
