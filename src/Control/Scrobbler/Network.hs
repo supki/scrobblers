@@ -47,7 +47,7 @@ data NetworkSettings = NetworkSettings
 data Failures = Drop | Preserve
     deriving (Show, Read, Eq, Ord, Enum, Bounded)
 
-makeLensesWith ?? ''NetworkSettings $ defaultRules & generateSignatures .~ False
+makeLensesWith ?? ''NetworkSettings $ lensRules & generateSignatures .~ False
 
 instance Default NetworkSettings where
   def = NetworkSettings
