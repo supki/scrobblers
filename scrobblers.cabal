@@ -11,15 +11,17 @@ author:              Matvey Aksenov
 maintainer:          matvey.aksenov@gmail.com
 category:            Web
 build-type:          Simple
+cabal-version:       >= 1.10
 extra-source-files:
   README.md
   examples/Casual.hs
   examples/Hardcore.hs
-cabal-version:       >= 1.10
 
 library
-  default-language:  Haskell2010
-  hs-source-dirs:    src
+  default-language:
+    Haskell2010
+  hs-source-dirs:
+    src
   exposed-modules:
     Control.Scrobbler
     Control.Scrobbler.Main
@@ -36,7 +38,6 @@ library
     , bytestring
     , cereal
     , containers
-    , data-default-class
     , lens-aeson         >= 1
     , exceptions
     , http-conduit
@@ -52,35 +53,42 @@ library
     , time
 
 test-suite bytestringing
-  default-language:  Haskell2010
+  type:
+    exitcode-stdio-1.0
+  default-language:
+    Haskell2010
   build-depends:
       base               >= 4 && < 5
     , hspec
     , netwire
     , QuickCheck
     , scrobblers
-  type: exitcode-stdio-1.0
-  hs-source-dirs: tests
-  main-is: bytestringing.hs
+  hs-source-dirs:
+    tests
+  main-is:
+    bytestringing.hs
   ghc-options:
     -Wall
     -fno-warn-unused-do-bind
 
 test-suite behaviours
-  default-language:  Haskell2010
+  type:
+    exitcode-stdio-1.0
+  default-language:
+    Haskell2010
   build-depends:
       base               >= 4 && < 5
     , bytestring
-    , data-default-class
     , hspec
     , lens
     , netwire
     , network
     , QuickCheck
     , scrobblers
-  type: exitcode-stdio-1.0
-  hs-source-dirs: tests
-  main-is: behaviours.hs
+  hs-source-dirs:
+    tests
+  main-is:
+    behaviours.hs
   ghc-options:
     -Wall
     -fno-warn-unused-do-bind

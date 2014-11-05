@@ -6,7 +6,6 @@ module Control.Scrobbler.Types where
 import Control.Applicative (Applicative(..), (<$>))
 import Control.Lens
 import Control.Wire (Wire, Timed, NominalDiffTime)
-import Data.Default.Class (Default(..))
 import Data.Foldable (Foldable(..))
 import Data.Int (Int64)
 import Data.Monoid (mempty)
@@ -38,13 +37,20 @@ data Track = Track
 
 makeLensesWith ?? ''Track $ lensRules & generateSignatures .~ False
 
-instance Default Track where
-  def = Track
-    { _title  = ""
-    , _artist = ""
-    , _album  = ""
-    , _length = 0
-    }
+defaultTrack :: Track
+defaultTrack = Track
+  { _title  = ""
+  , _artist = ""
+  , _album  = ""
+  , _length = 0
+  }
+
+defaultStampedTrack :: Stamped Track
+defaultStampedTrack = Stamped
+  { _untimed = defaultTrack
+  , _start = 0
+  , _local = 0
+  }
 
 instance Serialize Track where
   put tr = do
@@ -57,7 +63,7 @@ instance Serialize Track where
     Right ar <- decodeUtf8' <$> get
     Right al <- decodeUtf8' <$> get
     le <- get
-    return $ def
+    return $ defaultTrack
       & title .~ ti
       & artist .~ ar
       & album .~ al
@@ -122,13 +128,6 @@ instance Foldable Stamped where
 
 instance Traversable Stamped where
   traverse f (Stamped a s l) = f a <&> \a' -> Stamped a' s l
-
-instance Default a => Default (Stamped a) where
-  def = Stamped
-    { _untimed = def
-    , _start = 0
-    , _local = 0
-    }
 
 instance Serialize a => Serialize (Stamped a) where
   put t = do

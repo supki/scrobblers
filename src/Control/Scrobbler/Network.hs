@@ -6,7 +6,9 @@
 -- Supports optional encryption
 module Control.Scrobbler.Network
   ( -- * Networking
-    NetworkSettings(..), Failures(..)
+    NetworkSettings(..)
+  , Failures(..)
+  , defaultNetworkSettings
   , host, port, failures
   , send, receive
   , serialize
@@ -17,7 +19,6 @@ import           Control.Lens
 import           Control.Monad (liftM, mplus)
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
-import           Data.Default.Class (Default(..))
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           Data.Sequence (ViewL(..), viewl)
@@ -44,12 +45,12 @@ data Failures = Drop | Preserve
 
 makeLensesWith ?? ''NetworkSettings $ lensRules & generateSignatures .~ False
 
-instance Default NetworkSettings where
-  def = NetworkSettings
-    { _host     = "localhost"
-    , _port     = PortNumber 4774
-    , _failures = Preserve
-    }
+defaultNetworkSettings :: NetworkSettings
+defaultNetworkSettings = NetworkSettings
+  { _host     = "localhost"
+  , _port     = PortNumber 4774
+  , _failures = Preserve
+  }
 
 -- | Lens to hostname
 host :: Lens' NetworkSettings HostName

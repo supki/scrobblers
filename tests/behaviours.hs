@@ -9,7 +9,6 @@ import           Control.Lens
 import           Control.Wire hiding (unless)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import           Data.Default.Class (def)
 import           Data.String (fromString)
 import           Network
 import           Prelude hiding ((.), id)
@@ -49,7 +48,7 @@ main = do
     describe "communication" $ do
       it "correctly maintains the queue of failures" $ do
         let ds = ["AAAA", "BBBB", "CCCC", "DDDD"]
-        (_, w) <- stepWire (send (def & port .~ PortNumber 4567)) mempty (Right "AAAA")
+        (_, w) <- stepWire (send (defaultNetworkSettings & port .~ PortNumber 4567)) mempty (Right "AAAA")
         (_, w) <- stepWire w mempty (Right "BBBB")
         (_, w) <- stepWire w mempty (Right "CCCC")
         forkIO $ do
@@ -63,7 +62,7 @@ main = do
         ds' `shouldBe` ds
       it "correctly does not maintain the queue of failures" $ do
         let ds = ["DDDD"]
-        (_, w) <- stepWire (send (def & port .~ PortNumber 4568 & failures .~ Drop)) mempty (Right "AAAA")
+        (_, w) <- stepWire (send (defaultNetworkSettings & port .~ PortNumber 4568 & failures .~ Drop)) mempty (Right "AAAA")
         (_, w) <- stepWire w mempty (Right "BBBB")
         (_, w) <- stepWire w mempty (Right "CCCC")
         forkIO $ do

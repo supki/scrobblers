@@ -13,7 +13,6 @@ import Control.Lens
 import Control.Monad (liftM)
 import Control.Monad.Trans (MonadIO, liftIO)
 import Control.Wire
-import Data.Default.Class (def)
 import Data.Int (Int64)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import Prelude hiding ((.), id, length)
@@ -49,7 +48,7 @@ contestWith' :: MonadIO m
              -> Scrobbler m (Int64, PlayerStateChange Track) (Scrobble (Stamped Track))
 contestWith' f = mkStateM Stopped $ \_dt ((t, ch), tr) -> do
   lt <- round `liftM` liftIO getPOSIXTime
-  return (change (Left NoScrobbles) (f t) tr, ch <&> \tr' -> def
+  return (change (Left NoScrobbles) (f t) tr, ch <&> \tr' -> defaultStampedTrack
     & untimed .~ tr'
     & start .~ t
     & local .~ lt)

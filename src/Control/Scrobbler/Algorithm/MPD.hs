@@ -6,7 +6,6 @@ module Control.Scrobbler.Algorithm.MPD
 import           Control.Lens
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
-import           Data.Default.Class (def)
 import           Data.Int (Int64)
 import           Data.Map (Map)
 import           Data.Text (Text)
@@ -32,7 +31,7 @@ candidate = candidate' . time'
 candidate' :: MonadIO m => Scrobbler m Int64 (PlayerStateChange Track)
 candidate' = mkStateM NotPlaying $ \_dt (t, s) -> liftIO $ do
   -- Wait 5 seconds to complete query. That should be enough
-  r <- timeout 5000000 . MPD.withMPD $ do
+  r <- timeout 5000000 . MPD.withMPD $
     MPD.stState `fmap` MPD.status >>= \s' -> case (s, s') of
       -- If we were not playing and are not playing now there is no candidate to send
       (NotPlaying, MPD.Stopped) -> return (Left NoCandidate, NotPlaying)
@@ -66,7 +65,7 @@ fetchTrackData :: MPD.Song -> Track
 fetchTrackData s =
   let song_tags = MPD.sgTags s
       song_length = fromIntegral (MPD.sgLength s)
-  in def
+  in defaultTrack
     & artist .~ getTag MPD.Artist song_tags
     & title  .~ getTag MPD.Title song_tags
     & album  .~ getTag MPD.Album song_tags
