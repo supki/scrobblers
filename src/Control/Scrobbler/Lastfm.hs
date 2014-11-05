@@ -93,11 +93,12 @@ scrobble Credentials { secret, apiKey, sessionKey } =
 updateNowPlaying :: MonadIO m
                  => Credentials -> Scrobbler m (PlayerStateChange Track) (PlayerStateChange Track)
 updateNowPlaying Credentials { secret = s, apiKey = ak, sessionKey = sk } =
-  mkFixM $ \_dt -> liftIO . liftM Right . traverse (\t -> go t >> return t)
+  mkFixM $ \_dt -> liftIO . liftM Right . traverse (\t -> do go t; return t)
  where
   -- We do not care if lastfm request fails, so be it:
   -- User.updateNowPlaying is not essential for scrobbling
   go Track { _artist = ar, _title = t, _album = al, _length = l } =
-    void . L.lastfm undefined . L.sign s $
-      Track.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*>
-      L.apiKey ak <*> L.sessionKey sk <* L.json
+    L.withConnection $ \conn ->
+      void . L.lastfm conn . L.sign s $
+        Track.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*>
+        L.apiKey ak <*> L.sessionKey sk <* L.json
