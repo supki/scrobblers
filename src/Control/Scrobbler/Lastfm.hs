@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiWayIf #-}
 -- | Lastfm interaction
@@ -22,7 +23,7 @@ import           Data.Text (Text)
 import           Network.HTTP.Conduit (HttpException(..))
 import           Network.HTTP.Types
 import qualified Network.Lastfm as L
-import qualified Network.Lastfm.Track as T
+import qualified Network.Lastfm.Track as Track
 import           Prelude hiding ((.), id, length)
 
 import           Control.Scrobbler.Netwire (mkStateM, mkFixM)
@@ -36,21 +37,24 @@ data Credentials = Credentials
   , secret     :: !L.Secret
   } deriving (Show)
 
+{-# ANN scrobble ("HLint: ignore Avoid lambda" :: String) #-}
 -- | Scrobble track
 scrobble :: MonadIO m => Credentials -> Scrobbler m (Scrobble (Stamped Track)) (Successes Track)
-scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] $ \_dt -> liftIO . go
+scrobble Credentials { secret, apiKey, sessionKey } =
+  mkStateM [] $ \_dt s -> liftIO (L.withConnection (\conn -> go conn s))
  where
   -- Retries to scrobble 49 last failures in addition
   -- to trying to scrobble the new candidate
-  go (Scrobble ft, xs) = do
+  go conn (Scrobble ft, xs) = do
     let (ts, ts') = splitAt 49 xs
-    (ss, fs) <- go' (ft:|ts)
+    (ss, fs) <- go' conn (ft:|ts)
     return (foldr (\_ _ -> Right (Successes ss)) (Left NoScrobbles) ss, fs ++ ts')
 
-  go' :: NonEmpty (Stamped Track) -> IO ([Track], [Stamped Track])
-  go' tss = L.sign s
-    (T.scrobble (N.map timedTrackToItem tss) <*> L.apiKey ak <*> L.sessionKey sk <* L.json) &
-    L.lastfm <&> \case
+  go' :: L.Connection -> NonEmpty (Stamped Track) -> IO ([Track], [Stamped Track])
+  go' conn tss = L.sign secret
+    (Track.scrobble (N.map timedTrackToItem tss)
+      <*> L.apiKey apiKey <*> L.sessionKey sessionKey <* L.json) &
+    L.lastfm conn <&> \case
     -- So last.fm request may fail and there is a couple of reasons for it to do so
       -- We can catch some exception for http-conduit
       Left (L.LastfmHttpError (StatusCodeException (Status { statusCode = c }) hs _))
@@ -79,7 +83,7 @@ scrobble Credentials { secret = s, apiKey = ak, sessionKey = sk } = mkStateM [] 
     resp ^.. (key "scrobbles".key "scrobble"._Array.ifolded<.key "ignoredMessage".key "code"._String.filtered (/= "0")).asIndex
 
   timedTrackToItem :: Stamped Track -> L.Request f L.Scrobble
-  timedTrackToItem t = T.item
+  timedTrackToItem t = Track.item
     <*> L.artist    (t^.untimed.artist)
     <*> L.track     (t^.untimed.title)
     <*> L.timestamp (t^.local)
@@ -93,6 +97,7 @@ updateNowPlaying Credentials { secret = s, apiKey = ak, sessionKey = sk } =
  where
   -- We do not care if lastfm request fails, so be it:
   -- User.updateNowPlaying is not essential for scrobbling
-  go Track { _artist = ar, _title = t, _album = al, _length = l } = void . L.lastfm . L.sign s $
-    T.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*>
-    L.apiKey ak <*> L.sessionKey sk <* L.json
+  go Track { _artist = ar, _title = t, _album = al, _length = l } =
+    void . L.lastfm undefined . L.sign s $
+      Track.updateNowPlaying <*> L.artist ar <*> L.track t <* L.album al <* L.duration l <*>
+      L.apiKey ak <*> L.sessionKey sk <* L.json
