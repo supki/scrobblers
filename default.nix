@@ -1,4 +1,4 @@
-{ cabal, aeson, cereal, exceptions, hspec, httpConduit
+{ cabal, aeson, cereal, exceptions, hspec, httpClient
 , httpTypes, lens, lensAeson, liblastfm, libmpd, mtl, netwire, network
 , QuickCheck, semigroups, text, time
 }:
@@ -8,7 +8,7 @@ cabal.mkDerivation (self: rec {
   version = "0.1.0.0";
   src = ./.;
   buildDepends = [
-    aeson cereal exceptions httpConduit httpTypes
+    aeson cereal exceptions httpClient httpTypes
 	lens lensAeson liblastfm libmpd mtl netwire network semigroups
 	text time
   ];

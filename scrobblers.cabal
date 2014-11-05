@@ -17,6 +17,10 @@ extra-source-files:
   examples/Casual.hs
   examples/Hardcore.hs
 
+source-repository head
+  type:     git
+  location: https://github.com/supki/scrobblers
+
 library
   default-language:
     Haskell2010
@@ -40,7 +44,7 @@ library
     , containers
     , lens-aeson         >= 1
     , exceptions
-    , http-conduit
+    , http-client
     , http-types
     , lens               >= 4.4
     , liblastfm          >= 0.4

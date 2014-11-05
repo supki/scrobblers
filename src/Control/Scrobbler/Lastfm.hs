@@ -20,7 +20,7 @@ import           Data.Foldable (toList)
 import           Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as N
 import           Data.Text (Text)
-import           Network.HTTP.Conduit (HttpException(..))
+import           Network.HTTP.Client (HttpException(..))
 import           Network.HTTP.Types
 import qualified Network.Lastfm as L
 import qualified Network.Lastfm.Track as Track
