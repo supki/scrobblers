@@ -9,19 +9,14 @@ module Control.Scrobbler.Network
     NetworkSettings(..), Failures(..)
   , host, port, failures
   , send, receive
-    -- * Ennetworking
-  , encrypt, encrypt', serialize
-    -- * Denetworking
-  , decrypt, decrypt', deserialize
+  , serialize
+  , deserialize
   ) where
 
 import           Control.Lens
 import           Control.Monad (liftM, mplus)
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
-import           Crypto.Cipher.AES128
-import           Crypto.Classes (getIVIO)
-import           Crypto.Types (IV(..))
 import           Data.Default.Class (Default(..))
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -102,28 +97,6 @@ receive ns = mkStateM Nothing $ \_dt ((), ms) -> liftIO $ do
     Nothing -> return (Left NoReceive, Just s)
  `mplus`
   return (Left NoReceive, Nothing)
-
--- | Encrypt 'Track' with AES-CTR 'Wire'
-encrypt :: (Serialize b, MonadIO m) => AESKey128 -> Scrobbler m b ByteString
-encrypt k = encrypt' k . serialize
-
--- | Encrypt 'ByteString' with AES-CTR 'Wire'
-encrypt' :: MonadIO m => AESKey128 -> Scrobbler m ByteString ByteString
-encrypt' k = mkStateM Nothing $ \_dt (bs, s) -> do
-  IV iv <- maybe (liftIO getIVIO) return s
-  let (bs', iv') = ctr k (IV iv) bs
-  return (Right (iv `B.append` bs'), Just iv')
-
--- | Decrypt 'Track' with AES-CTR 'Wire'
-decrypt :: (Serialize b, Monad m) => AESKey128 -> Scrobbler m ByteString b
-decrypt k = deserialize . decrypt' k
-
--- | Decrypt 'ByteString' with AES-CTR 'Wire'
-decrypt' :: Monad m => AESKey128 -> Scrobbler m ByteString ByteString
-decrypt' k = mkFix $ \_dt bs ->
-  let (iv, bs') = B.splitAt 16 bs
-      (bs'', _) = unCtr k (IV iv) bs'
-  in Right bs''
 
 -- | 'Serialize' datum for network transmission
 serialize :: (Serialize a, Monad m) => Scrobbler m a ByteString

@@ -147,17 +147,6 @@ all players. Or something like that
     `serialize` and `deserialize` wires help with serialization of any stuff you can get
     in the process of scrobbling
 
-  * Encryption
-
-    ```haskell
-    encrypt ∷ Serialize a ⇒ AESKey → Scrobbler a ByteString
-    decrypt ∷ Serialize b ⇒ AESKey → Scrobbler ByteString b
-    ```
-
-    `encrypt` and `decrypt` wires help with encryption of the same stuff. They do
-    serialization too, use `encrypt'` and `decrypt'` variants if for some reason
-    you don't want them to
-
   * Communication
 
     Finally:

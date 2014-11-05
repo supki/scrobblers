@@ -1,6 +1,6 @@
-{ cabal, aeson, cereal, cipherAes128, cryptoApi, dataDefaultClass
-, exceptions, hspec, httpConduit, httpTypes, lens, lensAeson, liblastfm
-, libmpd, mtl, netwire, network, QuickCheck, semigroups, text, time
+{ cabal, aeson, cereal, dataDefaultClass, exceptions, hspec, httpConduit
+, httpTypes, lens, lensAeson, liblastfm, libmpd, mtl, netwire, network
+, QuickCheck, semigroups, text, time
 }:
 
 cabal.mkDerivation (self: rec {
@@ -8,9 +8,9 @@ cabal.mkDerivation (self: rec {
   version = "0.1.0.0";
   src = ./.;
   buildDepends = [
-    aeson cereal cipherAes128 cryptoApi dataDefaultClass exceptions
-    httpConduit httpTypes lens lensAeson liblastfm libmpd mtl netwire
-    network semigroups text time
+    aeson cereal dataDefaultClass exceptions httpConduit httpTypes
+	lens lensAeson liblastfm libmpd mtl netwire network semigroups
+	text time
   ];
   testDepends = buildDepends ++ [ hspec QuickCheck ];
   meta = {

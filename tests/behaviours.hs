@@ -6,15 +6,13 @@ module Main where
 import           Control.Concurrent (forkIO, threadDelay)
 import           Control.Concurrent.MVar
 import           Control.Lens
-import           Control.Monad (unless)
 import           Control.Wire hiding (unless)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import           Data.Default.Class (def)
-import qualified Data.Text as T
+import           Data.String (fromString)
 import           Network
 import           Prelude hiding ((.), id)
-import           System.Exit (exitFailure)
 import           System.Timeout (timeout)
 import           Test.Hspec
 import           Test.Hspec.Runner
@@ -30,9 +28,9 @@ import           Control.Scrobbler.Types
 
 instance Arbitrary Track where
   arbitrary = Track
-    <$> (T.pack <$> arbitrary)
-    <*> (T.pack <$> arbitrary)
-    <*> (T.pack <$> arbitrary)
+    <$> (fmap fromString arbitrary)
+    <*> (fmap fromString arbitrary)
+    <*> (fmap fromString arbitrary)
     <*> arbitrary
 
 instance Arbitrary a => Arbitrary (Stamped a) where
@@ -45,7 +43,7 @@ instance Arbitrary a => Arbitrary (Stamped a) where
 main :: IO ()
 main = do
   b <- newEmptyMVar
-  r <- hspecWith options $ do
+  hspecWith options $ do
     describe "announcements" $
       prop "does nothing with its argument" $ announcement_is_id
     describe "communication" $ do
@@ -77,7 +75,6 @@ main = do
         (_, _) <- stepWire w mempty (Right "DDDD")
         ds' <- takeMVar b
         ds' `shouldBe` ds
-  unless (summaryFailures r == 0) exitFailure
  where
   options = defaultConfig { configQuickCheckMaxSuccess = Just 500 }
 
