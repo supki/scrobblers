@@ -13,9 +13,8 @@ category:            Web
 build-type:          Simple
 cabal-version:       >= 1.10
 extra-source-files:
-  README.md
+  README.markdown
   examples/Casual.hs
-  examples/Hardcore.hs
 
 source-repository head
   type:     git

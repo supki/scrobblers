@@ -170,11 +170,7 @@ all players. Or something like that
 
     `receive` only cares about `port` part of settings
 
-[Hardcore][3] example demonstrates networking. Also [Client-Server][4] app example might be of use
-
 
  [0]: http://www.last.fm/api/scrobbling
  [1]: http://www.last.fm/
  [2]: https://github.com/supki/scrobblers/blob/master/examples/Casual.hs
- [3]: https://github.com/supki/scrobblers/blob/master/examples/Hardcore.hs
- [4]: https://github.com/supki/scrobblers/blob/master/app
