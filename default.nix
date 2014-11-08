@@ -1,17 +1,16 @@
-{ cabal, aeson, cereal, exceptions, hspec, httpClient, httpTypes
-, lens, lensAeson, liblastfm, libmpd, mtl, netwire, network
-, QuickCheck, semigroups, text, time
-}:
+{ haskellPackages ? (import <nixpkgs> {}).haskellPackages }:
 
-cabal.mkDerivation (self: {
+haskellPackages.cabal.mkDerivation (self: {
   pname = "scrobblers";
   version = "0.1.0.0";
   src = ./.;
-  buildDepends = [
+  buildDepends = with haskellPackages; [
     aeson cereal exceptions httpClient httpTypes lens lensAeson
     liblastfm libmpd mtl netwire network semigroups text time
   ];
-  testDepends = [ hspec lens netwire network QuickCheck ];
+  testDepends = with haskellPackages; [
+    hspec lens netwire network QuickCheck
+  ];
   meta = {
     description = "Lastfm scrobblers";
     license = self.stdenv.lib.licenses.bsd3;
