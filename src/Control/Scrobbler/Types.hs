@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 -- | Various types used in scrobbler
@@ -6,7 +7,11 @@ module Control.Scrobbler.Types where
 import Control.Applicative (Applicative(..), (<$>))
 import Control.Lens
 import Control.Wire (Wire, Timed, NominalDiffTime)
+#if (MIN_VERSION_base(4,8,0))
+import Data.Foldable (Foldable)
+#else
 import Data.Foldable (Foldable(..))
+#endif
 import Data.Int (Int64)
 import Data.Monoid (mempty)
 import Data.Serialize (Serialize(..), getWord8, putWord8)

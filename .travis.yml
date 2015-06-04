@@ -13,4 +13,3 @@ install:
 script:
     - cabal install --enable-tests
     - cabal install examples/
-    - cabal install app/
