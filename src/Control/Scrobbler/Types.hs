@@ -7,9 +7,7 @@ module Control.Scrobbler.Types where
 import Control.Applicative (Applicative(..), (<$>))
 import Control.Lens
 import Control.Wire (Wire, Timed, NominalDiffTime)
-#if (MIN_VERSION_base(4,8,0))
-import Data.Foldable (Foldable)
-#else
+#if (!MIN_VERSION_base(4,8,0))
 import Data.Foldable (Foldable(..))
 #endif
 import Data.Int (Int64)
