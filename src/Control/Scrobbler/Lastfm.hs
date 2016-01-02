@@ -22,8 +22,8 @@ import qualified Data.List.NonEmpty as N
 import           Data.Text (Text)
 import           Network.HTTP.Client (HttpException(..))
 import           Network.HTTP.Types
-import qualified Network.Lastfm as L
-import qualified Network.Lastfm.Track as Track
+import qualified Lastfm as L
+import qualified Lastfm.Track as Track
 import           Prelude hiding ((.), id, length)
 
 import           Control.Scrobbler.Netwire (mkStateM, mkFixM)

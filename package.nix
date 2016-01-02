@@ -6,13 +6,13 @@
 mkDerivation {
   pname = "scrobblers";
   version = "0.1.0.0";
-  src = builtins.filterSource (_: type: type != "unknown") ./.;
-  buildDepends = [
+  src = ./.;
+  libraryHaskellDepends = [
     aeson base bytestring cereal containers exceptions http-client
     http-types lens lens-aeson liblastfm libmpd mtl netwire network
     semigroups text time
   ];
-  testDepends = [
+  testHaskellDepends = [
     base bytestring hspec lens netwire network QuickCheck
   ];
   description = "Lastfm scrobblers";
