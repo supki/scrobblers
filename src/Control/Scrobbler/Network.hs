@@ -15,7 +15,7 @@ module Control.Scrobbler.Network
   , deserialize
   ) where
 
-import           Control.Lens
+import           Control.Lens hiding ((:<))
 import           Control.Monad (liftM, mplus)
 import           Control.Monad.Trans (MonadIO, liftIO)
 import           Control.Wire
