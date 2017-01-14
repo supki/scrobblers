@@ -4,3 +4,5 @@ cabal-dev/
 cabal.sandbox.config
 env.nix
 result
+tags
+.stack-work
