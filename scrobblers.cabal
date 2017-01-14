@@ -43,7 +43,7 @@ library
     , containers
     , lens-aeson         >= 1
     , exceptions
-    , http-client
+    , http-client        >= 0.5
     , http-types
     , lens               >= 4.4
     , liblastfm          >= 0.6

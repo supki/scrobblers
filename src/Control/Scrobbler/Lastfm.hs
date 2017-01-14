@@ -20,7 +20,7 @@ import           Data.Foldable (toList)
 import           Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as N
 import           Data.Text (Text)
-import           Network.HTTP.Client (HttpException(..))
+import           Network.HTTP.Client
 import           Network.HTTP.Types
 import qualified Lastfm as L
 import qualified Lastfm.Track as Track
@@ -57,16 +57,13 @@ scrobble Credentials { secret, apiKey, sessionKey } =
     L.lastfm conn <&> \case
     -- So last.fm request may fail and there is a couple of reasons for it to do so
       -- We can catch some exception for http-conduit
-      Left (L.LastfmHttpError (StatusCodeException (Status { statusCode = c }) hs _))
+      Left (L.LastfmHttpError (HttpExceptionRequest _ (StatusCodeException response chunk)))
         -- Status code >= 500 means server error, we hold our judgement on
-        | c >= 500 -> ([], toList tss)
-        -- Otherwise if we have response
-        | Just w <- lookup "Response" hs ->
-          -- Check if it's still some server error, we hold the judgement on
-          if | server (fromStrict w) -> ([], toList tss)
-          -- Otherwise it was a client error and we drop the tracks
-          -- (something really bad happened like broken API wrapper or whatever)
-             | otherwise -> ([], [])
+        | statusCode (responseStatus response) >= 500 -> ([], toList tss)
+        -- Check it it's still some server error, we hold the judgement on
+        | server chunk -> ([], toList tss)
+        -- Otherwise it was a client error and we drop the tracks
+        | otherwise -> ([], [])
       -- Otherwise we catched some other exception that's some weird failure and we better abort
       Left _ -> ([], toList tss)
       Right v -> case ignoredScrobbles v of
@@ -78,7 +75,11 @@ scrobble Credentials { secret, apiKey, sessionKey } =
           , toList tss^..ifolded.indices (`elem` is)
           )
 
-  server    = maybe False (`elem` [11, 16]) . preview (key "error" . _Number)
+  server = maybe False (`elem` [serviceOffline, temporaryError]) . preview (key "error" . _Number)
+    where -- https://www.last.fm/api/show/track.scrobble
+      serviceOffline = 11
+      temporaryError = 16
+
   ignoredScrobbles resp =
     resp ^.. (key "scrobbles".key "scrobble"._Array.ifolded<.key "ignoredMessage".key "code"._String.filtered (/= "0")).asIndex
 
