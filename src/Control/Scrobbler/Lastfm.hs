@@ -57,10 +57,12 @@ scrobble Credentials { secret, apiKey, sessionKey } =
     L.lastfm conn <&> \case
     -- So last.fm request may fail and there is a couple of reasons for it to do so
       -- We can catch some exception for http-conduit
-      Left (L.LastfmHttpError (HttpExceptionRequest _ (StatusCodeException response _)))
+      Left (L.LastfmHttpError (HttpExceptionRequest _ (StatusCodeException response chunk)))
         -- Status code >= 500 means server error, we hold our judgement on
         | (statusCode $ responseStatus response) >= 500 -> ([], toList tss)
-        -- Otherwise we drop the tracks
+        -- Check it it's still some server error, we hold the judgement on
+        | (server chunk) -> ([], toList tss)
+        -- Otherwise it was a client error and we drop the tracks
         | otherwise -> ([], [])
       -- Otherwise we catched some other exception that's some weird failure and we better abort
       Left _ -> ([], toList tss)
@@ -73,6 +75,7 @@ scrobble Credentials { secret, apiKey, sessionKey } =
           , toList tss^..ifolded.indices (`elem` is)
           )
 
+  server = maybe False (`elem` [11, 16]) . preview (key "error" . _Number)
   ignoredScrobbles resp =
     resp ^.. (key "scrobbles".key "scrobble"._Array.ifolded<.key "ignoredMessage".key "code"._String.filtered (/= "0")).asIndex
 
