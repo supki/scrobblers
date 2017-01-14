@@ -1,0 +1,12 @@
+flags: {}
+extra-package-dbs: []
+packages:
+  - '.'
+  - examples
+  - location:
+      git: https://github.com/supki/liblastfm.git
+      commit: da9a361b0b9a84fa3c3d7f1b07b8c7251cf81836
+extra-deps:
+  - hspec-expectations-lens-0.4.0
+  - xml-html-conduit-lens-0.3.2.2
+resolver: nightly-2016-12-17
