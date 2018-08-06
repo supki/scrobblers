@@ -1,4 +1,4 @@
-resolver: lts-12.4
+resolver: lts-11.19
 packages:
   - '.'
   - 'examples'
@@ -15,7 +15,6 @@ extra-deps:
   - hspec-expectations-lens-0.4.0
   - html-conduit-1.2.1.2
   - resourcet-1.1.11
-  - streaming-commons-0.1.17
   - xml-conduit-1.7.1.2
   - xml-html-conduit-lens-0.3.2.1
 ghc-options:

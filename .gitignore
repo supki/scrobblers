@@ -6,3 +6,5 @@ env.nix
 result
 tags
 .stack-work
+dist-newstyle
+.ghc.environment*
